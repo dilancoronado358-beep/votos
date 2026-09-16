@@ -31,7 +31,8 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* No centrar verticalmente en móvil */
+    align-items: flex-start;
+    /* No centrar verticalmente en móvil */
     padding: 0;
 }
 
@@ -525,7 +526,16 @@ input[type="password"]:focus {
 
 /* Background specific for login */
 body.is-login-screen {
-    background: url('https://res.cloudinary.com/dtmqftcsr/image/upload/v1789525696/laguna_del_salado_al2w2s.jpg') no-repeat center center / cover;
+    background-image: url('https://res.cloudinary.com/dtmqftcsr/image/upload/v1789525696/laguna_del_salado_al2w2s.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    /* scroll en vez de fixed para iOS */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
 }
 
 body.is-login-screen::before {
@@ -535,8 +545,8 @@ body.is-login-screen::before {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: -1;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 0;
 }
 
 /* Hide default shapes on login */
@@ -546,17 +556,19 @@ body.is-login-screen .bg-shape {
 
 /* The Panel */
 .login-glass-panel {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     width: 100%;
-    max-width: 450px;
+    max-width: 440px;
     margin: 0 auto;
     color: white;
+    position: relative;
+    z-index: 1;
 }
 
 .login-title {
@@ -931,13 +943,29 @@ body.is-login-screen .bg-shape {
         border-top: 3px solid transparent;
     }
 
-    .admin-stat-card.accent-blue { border-top-color: #3b82f6; }
-    .admin-stat-card.accent-green { border-top-color: #10b981; }
-    .admin-stat-card.accent-navy { border-top-color: #0a2540; }
+    .admin-stat-card.accent-blue {
+        border-top-color: #3b82f6;
+    }
 
-    .stat-card-icon { font-size: 1.4rem; }
-    .stat-card-number { font-size: 1.3rem; }
-    .stat-card-label { font-size: 0.65rem; }
+    .admin-stat-card.accent-green {
+        border-top-color: #10b981;
+    }
+
+    .admin-stat-card.accent-navy {
+        border-top-color: #0a2540;
+    }
+
+    .stat-card-icon {
+        font-size: 1.4rem;
+    }
+
+    .stat-card-number {
+        font-size: 1.3rem;
+    }
+
+    .stat-card-label {
+        font-size: 0.65rem;
+    }
 
     /* Gráfico más bajo en móvil */
     .chart-container {
@@ -965,7 +993,8 @@ body.is-login-screen .bg-shape {
     }
 
     .admin-header-brand p {
-        display: none; /* Ocultar subtítulo en móvil */
+        display: none;
+        /* Ocultar subtítulo en móvil */
     }
 
     /* Tabla más compacta */
@@ -984,13 +1013,12 @@ body.is-login-screen .bg-shape {
         padding: 12px 14px;
     }
 
-    /* Vista login: envuelve el panel centrado verticalmente */
-    #view-auth.active {
-        min-height: 100vh;
+    /* En login, el app-container no interfiere con el centrado */
+    body.is-login-screen .app-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px 0;
+        padding: 20px 16px;
     }
 
     .login-glass-panel {
@@ -1011,7 +1039,15 @@ body.is-login-screen .bg-shape {
         border-left: 3px solid transparent;
     }
 
-    .admin-stat-card.accent-blue { border-left-color: #3b82f6; }
-    .admin-stat-card.accent-green { border-left-color: #10b981; }
-    .admin-stat-card.accent-navy { border-left-color: #0a2540; }
+    .admin-stat-card.accent-blue {
+        border-left-color: #3b82f6;
+    }
+
+    .admin-stat-card.accent-green {
+        border-left-color: #10b981;
+    }
+
+    .admin-stat-card.accent-navy {
+        border-left-color: #0a2540;
+    }
 }
