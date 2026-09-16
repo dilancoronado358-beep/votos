@@ -54,7 +54,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 event: '*',
                 schema: 'public',
                 table: 'votos'
-            }, function() {
+            }, function(payload) {
+                if (payload.eventType === 'INSERT') {
+                    audioDing.play().catch(function(e) { console.log('Audio autoplay prevent', e); });
+                    showToast('🔔 ¡Mesa ' + payload.new.junta_numero + ' ha reportado ' + payload.new.cantidad_votos + ' votos!', 'success');
+                }
                 // Si el usuario está en base, recargar dashboard
                 if (currentView === 'base') {
                     renderDashboard();
@@ -63,10 +67,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (currentView === 'admin') {
                     renderAdminDashboard();
                 }
+                // Actualizar modo TV si está activo
+                if (window._isTVMode) window._refreshTV();
             })
-            .subscribe(function(status) {
-                console.log('Realtime votos:', status);
-            });
+            .subscribe();
+
+        // Canal en tiempo real para Alertas SOS
+        supabase.channel('alertas-live')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, function(payload) {
+                var a = payload.new;
+                audioSiren.loop = true;
+                audioSiren.play().catch(function(e){ console.log('Siren prevent', e); });
+                document.getElementById('sos-alert-text').textContent = 'Recinto: ' + a.establecimiento;
+                document.getElementById('sos-alert-banner').style.display = 'block';
+            })
+            .subscribe();
     }
 
     try {
@@ -183,6 +198,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================================================
+    // GPS & SOS
+    // ================================================
+    function getLocation() {
+        return new Promise(function(resolve) {
+            if (!navigator.geolocation) return resolve({ lat: null, lon: null });
+            navigator.geolocation.getCurrentPosition(
+                function(pos) { resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+                function() { resolve({ lat: null, lon: null }); },
+                { timeout: 5000 }
+            );
+        });
+    }
+
+    window._reportarSOS = async function() {
+        if (!currentUser) return showToast('Sesión expirada', 'error');
+        var est = document.getElementById('establecimiento-mesa').value || document.getElementById('asistencia-establecimiento').value || 'Desconocido';
+        var msg = prompt('🚨 ALERTA SOS: ¿Cuál es la emergencia en el recinto ' + est + '?');
+        if (!msg) return;
+
+        try {
+            var ins = await supabase.from('alertas').insert([{
+                user_id: currentUser.id,
+                establecimiento: est,
+                mensaje: msg
+            }]);
+            if (ins.error) throw ins.error;
+            showToast('🚨 SOS Enviado. La sede ha sido notificada.', 'success');
+        } catch(e) {
+            showToast('Error al enviar SOS: ' + e.message, 'error');
+        }
+    };
+
+    // ================================================
     // SUBIR Y COMPRIMIR ARCHIVO
     // ================================================
     async function compressImage(file) {
@@ -233,13 +281,48 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================================================
+    window._reportarAsistencia = async function() {
+        var est = document.getElementById('asistencia-establecimiento').value.trim();
+        if (!est) { showToast('Ingresa el nombre del establecimiento', 'error'); return; }
+        if (!currentUser) { showToast('Sesión expirada', 'error'); return; }
+
+        var btn = document.getElementById('btn-asistencia');
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+
+        var loc = await getLocation();
+
+        try {
+            var payload = { 
+                user_id: currentUser.id, 
+                establecimiento: est,
+                latitud: loc.lat,
+                longitud: loc.lon
+            };
+            var ins = await supabase.from('asistencias').insert([payload]);
+            if (ins.error) throw ins.error;
+            showToast('✅ Instalación reportada con éxito', 'success');
+            document.getElementById('asistencia-establecimiento').value = '';
+            btn.textContent = '📍 Asistencia Confirmada';
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+            btn.disabled = false;
+            btn.textContent = '📍 Confirmar Asistencia';
+        }
+    };
+
+    // ================================================
     // ENVIAR VOTO
     // ================================================
     async function submitVote(e) {
         e.preventDefault();
         var establecimiento = document.getElementById('establecimiento-mesa').value.trim();
         var junta = document.getElementById('numero-junta').value;
-        var votos = document.getElementById('cantidad-votos').value;
+        var genero = document.getElementById('genero-junta').value;
+        var votos = parseInt(document.getElementById('cantidad-votos').value) || 0;
+        var blancos = parseInt(document.getElementById('votos-blancos').value) || 0;
+        var nulos = parseInt(document.getElementById('votos-nulos').value) || 0;
+        var total = parseInt(document.getElementById('total-sufragantes').value) || 0;
         var observaciones = document.getElementById('observaciones').value.trim();
         var fileInput = document.getElementById('evidencia-archivo');
         var btnSubmit = e.target.querySelector('button[type="submit"]');
@@ -247,8 +330,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!fileInput.files.length) { showToast('Debes adjuntar la evidencia del acta.', 'error'); return; }
         if (!currentUser) { showToast('Tu sesión ha expirado', 'error'); logout(); return; }
 
+        // Anti-fraud validation
+        var sum = votos + blancos + nulos;
+        if (sum > total) {
+            var msg = '⚠️ INCONSISTENCIA DETECTADA:\n' +
+                      'Votos (' + votos + ') + Blancos (' + blancos + ') + Nulos (' + nulos + ') = ' + sum + '\n' +
+                      'El Padrón es de ' + total + '.\n\n' +
+                      'Hay ' + (sum - total) + ' votos de más. ¿Deseas enviar esto con ALERTA ROJA de fraude/error?';
+            if (!confirm(msg)) return;
+            observaciones = '[ALERTA: Inconsistencia Numérica] ' + observaciones;
+        }
+
         btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Verificando...';
+        btnSubmit.textContent = 'Obteniendo GPS y subiendo...';
+
+        var loc = await getLocation();
 
         try {
             // 1. Check duplicates
@@ -270,7 +366,13 @@ document.addEventListener('DOMContentLoaded', function () {
             var payload = {
                 establecimiento: establecimiento,
                 junta_numero: parseInt(junta),
-                cantidad_votos: parseInt(votos),
+                genero: genero,
+                cantidad_votos: votos,
+                votos_blancos: blancos,
+                votos_nulos: nulos,
+                total_sufragantes: total,
+                latitud: loc.lat,
+                longitud: loc.lon,
                 observaciones: observaciones,
                 evidencia_url: publicUrl,
                 user_id: currentUser.id
@@ -287,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             e.target.reset();
+            document.getElementById('genero-junta').value = '';
             document.getElementById('file-name').textContent = 'Toca aquí para seleccionar un archivo';
             document.querySelector('.file-upload-wrapper').classList.remove('has-file');
         } catch (err) {
@@ -315,9 +418,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     // DASHBOARD (EQUIPO BASE)
     // ================================================
+    function getSkeletonTableRows(cols) {
+        var html = '';
+        for (var i = 0; i < 5; i++) {
+            html += '<tr class="animate-row" style="animation-delay:' + (i * 50) + 'ms">';
+            for(var j=0; j<cols; j++){
+                html += '<td><div class="skeleton skeleton-row"></div></td>';
+            }
+            html += '</tr>';
+        }
+        return html;
+    }
+
     async function fetchDashboardData() {
         var tbody = document.getElementById('registros-tbody');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando datos...</td></tr>';
+        tbody.innerHTML = getSkeletonTableRows(6);
+        
         try {
             var res = await supabase.from('votos').select('*').order('created_at', { ascending: false });
             if (res.error) throw res.error;
@@ -376,19 +492,29 @@ document.addEventListener('DOMContentLoaded', function () {
         var end = start + PAGE_SIZE;
         var pageData = baseFiltered.slice(start, end);
 
-        pageData.forEach(function(rec) {
+        pageData.forEach(function(rec, idx) {
             var t = new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             var obsText = rec.observaciones ? '<span style="color:var(--danger); font-size:0.8rem;" title="' + rec.observaciones + '">⚠️ ' + rec.observaciones + '</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
+            var genText = rec.genero === 'Masculino' ? ' (M)' : (rec.genero === 'Femenino' ? ' (F)' : '');
+            
+            var mapLink = (rec.latitud && rec.longitud) 
+                ? '<a href="https://www.google.com/maps/search/?api=1&query=' + rec.latitud + ',' + rec.longitud + '" target="_blank" style="color:var(--primary); text-decoration:none; font-size:1.2rem;" title="Ver en Mapa">📍</a>'
+                : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
+
             var tr = document.createElement('tr');
-            tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + '</strong><br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
+            tr.className = 'animate-row';
+            tr.style.animationDelay = (idx * 50) + 'ms';
+            tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + genText + '</strong><br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
                 '<td style="color:var(--success);font-weight:bold;">' + rec.cantidad_votos + '</td>' +
                 '<td style="color:var(--text-muted);font-size:0.85rem;">' + t + '</td>' +
                 '<td>' + obsText + '</td>' +
+                '<td style="text-align:center;">' + mapLink + '</td>' +
                 '<td><button class="btn-view-doc" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button></td>';
             tbody.appendChild(tr);
         });
 
         updatePagination('votos', basePage, totalPages);
+        updateTicker(baseData);
     }
 
     // Pagination helper
@@ -418,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function () {
         baseSearchInput.addEventListener('input', function() {
             var term = this.value.toLowerCase();
             baseFiltered = baseData.filter(function(r) {
-                var text = ('Mesa ' + r.junta_numero + ' ' + (r.establecimiento || '') + ' ' + (r.observaciones || '')).toLowerCase();
+                var text = ('Mesa ' + r.junta_numero + ' ' + (r.genero || '') + ' ' + (r.establecimiento || '') + ' ' + (r.observaciones || '')).toLowerCase();
                 return text.includes(term);
             });
             basePage = 1;
@@ -428,13 +554,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window._exportVotosCSV = function() {
         if (baseFiltered.length === 0) return showToast('No hay datos para exportar', 'error');
-        var headers = ['Junta', 'Establecimiento', 'Votos', 'Observaciones', 'Fecha/Hora', 'Link Evidencia'];
+        var headers = ['Junta', 'Género', 'Establecimiento', 'Votos', 'Blancos', 'Nulos', 'Total Padrón', 'Latitud', 'Longitud', 'Observaciones', 'Fecha/Hora', 'Link Evidencia'];
         var rows = [headers];
         baseFiltered.forEach(function(r) {
             rows.push([
                 r.junta_numero,
+                r.genero || '',
                 r.establecimiento || '',
                 r.cantidad_votos,
+                r.votos_blancos || 0,
+                r.votos_nulos || 0,
+                r.total_sufragantes || 0,
+                r.latitud || '',
+                r.longitud || '',
                 r.observaciones || '',
                 new Date(r.created_at).toLocaleString(),
                 r.evidencia_url
@@ -442,6 +574,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         exportToCSV('votos_reporte.csv', rows);
     };
+
+    // Ticker Update
+    function updateTicker(records) {
+        if (!records || records.length === 0) return;
+        var tickerHTML = '';
+        var recent = records.slice(0, 10);
+        recent.forEach(function(r) {
+            var estText = r.establecimiento ? ' (' + r.establecimiento + ')' : '';
+            var obsIcon = r.observaciones ? ' ⚠️ Novedad' : '';
+            var genIcon = r.genero === 'Masculino' ? '♂️ ' : (r.genero === 'Femenino' ? '♀️ ' : '');
+            tickerHTML += '<span class="ticker-item">🟢 Mesa ' + r.junta_numero + ' ' + genIcon + estText + ' reporta <strong>' + r.cantidad_votos + ' votos</strong>' + obsIcon + '</span> • ';
+        });
+        
+        var tBase = document.getElementById('base-ticker-content');
+        var tAdmin = document.getElementById('admin-ticker-content');
+        if (tBase) tBase.innerHTML = tickerHTML;
+        if (tAdmin) tAdmin.innerHTML = tickerHTML;
+    }
 
     // Alias for old renderDashboard
     async function renderDashboard() {
@@ -492,33 +642,58 @@ document.addEventListener('DOMContentLoaded', function () {
     // ADMIN DASHBOARD
     // ================================================
     var adminChart = null;
+    var distChart = null;
+    var globalAdminFilter = null; // para filtrar por recinto
+
+    window._clearFilter = function() {
+        globalAdminFilter = null;
+        document.getElementById('btn-clear-filter').style.display = 'none';
+        renderAdminDashboard();
+    };
+
+    window._setFilter = function(est) {
+        globalAdminFilter = est;
+        document.getElementById('btn-clear-filter').style.display = 'inline-block';
+        renderAdminDashboard();
+    };
 
     async function fetchAdminData() {
         var tbody = document.getElementById('users-tbody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>';
+        if (tbody) tbody.innerHTML = getSkeletonTableRows(3);
         
         try {
             var [votosRes, usersRes] = await Promise.all([
-                supabase.from('votos').select('*').order('junta_numero'),
+                supabase.from('votos').select('*').order('created_at', { ascending: false }),
                 supabase.from('usuarios').select('*').order('username')
             ]);
 
             // Stats
             if (!votosRes.error) {
-                var totalVotos = votosRes.data.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+                var dataToRender = votosRes.data;
+                if (globalAdminFilter) {
+                    dataToRender = dataToRender.filter(function(r) { return r.establecimiento === globalAdminFilter; });
+                }
+
+                var totalVotos = dataToRender.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
                 document.getElementById('admin-total-votos').textContent = totalVotos.toLocaleString();
-                document.getElementById('admin-total-mesas').textContent = votosRes.data.length;
+                document.getElementById('admin-total-mesas').textContent = dataToRender.length;
                 
                 // Progress
-                var progressPercent = Math.min(100, Math.round((votosRes.data.length / TOTAL_JUNTAS) * 100));
+                var progressPercent = Math.min(100, Math.round((dataToRender.length / TOTAL_JUNTAS) * 100));
                 var pText = document.getElementById('admin-progress-text');
                 var pFill = document.getElementById('admin-progress-fill');
                 if (pText && pFill) {
-                    pText.textContent = votosRes.data.length + '/' + TOTAL_JUNTAS + ' (' + progressPercent + '%)';
+                    pText.textContent = dataToRender.length + '/' + TOTAL_JUNTAS + ' (' + progressPercent + '%)';
                     pFill.style.width = progressPercent + '%';
                 }
 
-                renderAdminChart(votosRes.data);
+                var chartData = dataToRender.slice().sort(function(a,b){ return a.junta_numero - b.junta_numero; });
+                renderAdminChart(chartData);
+                renderDistChart(dataToRender);
+                
+                // El ranking siempre usa todos los datos para no desaparecer
+                renderRanking(votosRes.data);
+                updateTicker(votosRes.data);
             }
 
             if (!usersRes.error) {
@@ -568,6 +743,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (adminChart) adminChart.destroy();
 
         if (canvas) {
+            var ctx = canvas.getContext('2d');
+            var gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.9)'); // blue
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.4)'); // cyan fade
+            
             adminChart = new Chart(canvas, {
                 type: 'bar',
                 data: {
@@ -575,10 +755,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     datasets: [{
                         label: 'Votos',
                         data: data,
-                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        backgroundColor: gradient,
                         borderColor: 'rgba(37, 99, 235, 1)',
                         borderWidth: 1,
-                        borderRadius: 4,
+                        borderRadius: 6,
                         borderSkipped: false
                     }]
                 },
@@ -627,9 +807,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var end = start + PAGE_SIZE;
         var pageData = usersFiltered.slice(start, end);
 
-        pageData.forEach(function(u) {
+        pageData.forEach(function(u, idx) {
             var roleLabels = { admin: 'Admin', mesa: 'Mesa Receptora', base: 'Equipo Base' };
             var tr = document.createElement('tr');
+            tr.className = 'animate-row';
+            tr.style.animationDelay = (idx * 50) + 'ms';
             var deleteBtn = u.role !== 'admin'
                 ? '<button class="btn-delete" onclick="window._deleteUser(\'' + u.id + '\', \'' + u.username + '\')">Eliminar</button>'
                 : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
@@ -642,6 +824,77 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         updatePagination('users', usersPage, totalPages);
+    }
+
+    function renderDistChart(data) {
+        var canvas = document.getElementById('chart-distribucion');
+        if (!canvas) return;
+        if (distChart) distChart.destroy();
+
+        var totalFabian = data.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+        var totalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+        var totalNulos = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+
+        var ctx = canvas.getContext('2d');
+        distChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Fabián Robles', 'Blancos', 'Nulos'],
+                datasets: [{
+                    data: [totalFabian, totalBlancos, totalNulos],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.9)', // Blue
+                        'rgba(200, 200, 200, 0.8)', // Gray
+                        'rgba(239, 68, 68, 0.8)'    // Red
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: document.body.classList.contains('dark-mode') ? '#e4e4e7' : '#3f3f46' } }
+                }
+            }
+        });
+    }
+
+    // Top 5 Ranking
+    function renderRanking(records) {
+        var rankingList = document.getElementById('ranking-list');
+        if (!rankingList) return;
+        
+        // agrupar por establecimiento
+        var groups = {};
+        records.forEach(function(r) {
+            var est = r.establecimiento || 'Desconocido';
+            if (!groups[est]) groups[est] = 0;
+            groups[est] += r.cantidad_votos;
+        });
+
+        var arr = Object.keys(groups).map(function(k) { return { nombre: k, votos: groups[k] }; });
+        arr.sort(function(a, b) { return b.votos - a.votos; });
+        var top5 = arr.slice(0, 5);
+
+        rankingList.innerHTML = '';
+        if (top5.length === 0) {
+            rankingList.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Sin datos</p>';
+            return;
+        }
+
+        var medals = ['🥇', '🥈', '🥉'];
+        top5.forEach(function(item, i) {
+            var icon = i < 3 ? medals[i] : '🏅';
+            var highlight = globalAdminFilter === item.nombre ? 'background: var(--surface-border); border-color: var(--primary);' : '';
+            var html = '<div class="ranking-item animate-row" style="cursor:pointer; ' + highlight + ' animation-delay:' + (i*100) + 'ms" onclick="window._setFilter(\'' + item.nombre + '\')">' +
+                '<div class="ranking-info">' +
+                    '<strong>' + icon + ' ' + item.nombre + '</strong>' +
+                '</div>' +
+                '<div class="ranking-votos">' + item.votos + '</div>' +
+            '</div>';
+            rankingList.innerHTML += html;
+        });
     }
 
     // Setup Admin Search Listener
@@ -688,6 +941,24 @@ document.addEventListener('DOMContentLoaded', function () {
     window._deleteUser = deleteUser;
     window._reloadUsers = fetchAdminData;
 
+    window._clearData = async function() {
+        if (!confirm('¿Estás seguro de que quieres eliminar TODOS los votos y actas de prueba? Esta acción no se puede deshacer.')) return;
+        
+        try {
+            // Eliminar todos los votos (usamos neq para machear todos)
+            var res = await supabase.from('votos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (res.error) throw res.error;
+            
+            showToast('Datos limpiados correctamente', 'success');
+            
+            // Recargar datos
+            fetchAdminData();
+        } catch (e) {
+            showToast('Error al limpiar datos: ' + e.message, 'error');
+            console.error(e);
+        }
+    };
+
     // ================================================
     // EXPORTAR A CSV
     // ================================================
@@ -728,6 +999,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================================================
+    // REPORTE PDF
+    // ================================================
+    window._exportPDF = function() {
+        if (typeof html2pdf === 'undefined') {
+            showToast('Librería PDF no cargada aún. Intente de nuevo.', 'error');
+            return;
+        }
+        var btn = document.getElementById('btn-export-pdf');
+        btn.disabled = true;
+        btn.textContent = 'Generando...';
+
+        var element = document.getElementById('view-admin');
+        
+        // Configuración para el PDF
+        var opt = {
+            margin:       0.5,
+            filename:     'Informe_Ejecutivo_Votos.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Generar PDF
+        html2pdf().set(opt).from(element).save().then(function() {
+            btn.disabled = false;
+            btn.textContent = '📄 PDF';
+            showToast('PDF generado exitosamente', 'success');
+        });
+    };
+
+    // ================================================
     // MODO OSCURO
     // ================================================
     function initDarkMode() {
@@ -745,6 +1047,87 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // ================================================
+    // MODO TV (WAR ROOM)
+    // ================================================
+    window._isTVMode = false;
+    var tvDistChart = null;
+
+    window._openTVMode = function() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function(e){});
+        }
+        document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
+        document.getElementById('view-tv').style.display = 'flex';
+        window._isTVMode = true;
+        window._refreshTV();
+    };
+
+    window._closeTVMode = function() {
+        if (document.fullscreenElement) document.exitFullscreen();
+        window._isTVMode = false;
+        document.getElementById('view-tv').style.display = 'none';
+        if (currentUser && currentUser.role) {
+            navigate(currentUser.role);
+        } else {
+            navigate('auth');
+        }
+    };
+
+    window._refreshTV = async function() {
+        if (!window._isTVMode) return;
+        var res = await supabase.from('votos').select('*').order('created_at', { ascending: false });
+        if (res.error) return;
+        var data = res.data;
+
+        var totalVotos = data.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+        document.getElementById('tv-votos-total').textContent = totalVotos.toLocaleString();
+        document.getElementById('tv-mesas-total').textContent = data.length;
+        
+        var progressPercent = Math.min(100, Math.round((data.length / TOTAL_JUNTAS) * 100));
+        document.getElementById('tv-progress-fill').style.width = progressPercent + '%';
+        document.getElementById('tv-progress-text').textContent = progressPercent + '% Escrutado';
+
+        // Ticker update on TV Mode
+        updateTicker(data);
+        var tTV = document.getElementById('tv-ticker-content');
+        if (tTV) {
+            var tickerHTML = '';
+            var recent = data.slice(0, 15);
+            recent.forEach(function(r) {
+                tickerHTML += '<span class="ticker-item" style="color:#22c55e;">🟢 Mesa ' + r.junta_numero + ' (' + (r.establecimiento||'') + ') = ' + r.cantidad_votos + ' votos</span> • ';
+            });
+            tTV.innerHTML = tickerHTML;
+        }
+
+        // TV Distribución Chart
+        var canvas = document.getElementById('chart-tv-distribucion');
+        if (canvas) {
+            if (tvDistChart) tvDistChart.destroy();
+            var totalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+            var totalNulos = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+            var ctx = canvas.getContext('2d');
+            tvDistChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fabián Robles', 'Blancos', 'Nulos'],
+                    datasets: [{
+                        data: [totalVotos, totalBlancos, totalNulos],
+                        backgroundColor: ['#3b82f6', '#71717a', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 24, weight: 'bold' }, padding: 30 } }
+                    }
+                }
+            });
+        }
+    };
 
     // ================================================
     // VINCULAR EVENTOS

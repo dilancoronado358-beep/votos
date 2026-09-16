@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema CNE - Fabián Robles</title>
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <title>Sistema de Votaciones - CNE</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,9 +49,12 @@
                         <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                     </div>
 
-                    <div class="text-center">
+                    <div class="text-center" style="display:flex; gap:10px; flex-direction:column;">
                         <button type="submit" class="btn btn-login-special" id="btn-login">
                             Ingresar
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="window._openTVMode()" style="font-size: 1.1rem; padding: 12px; border-radius: 12px; font-weight: bold; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: var(--primary);">
+                            📺 Entrar a Modo TV
                         </button>
                     </div>
                 </form>
@@ -65,14 +71,24 @@
                         <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Campaña Fabián Robles</p>
                     </div>
                 </div>
-                <button class="btn-icon btn-danger-icon" onclick="app.logout()" title="Cerrar Sesión">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-secondary btn-small" onclick="window._exportPDF()" title="Exportar Informe Ejecutivo a PDF" id="btn-export-pdf">
+                        📄 PDF
+                    </button>
+                    <button class="btn-icon btn-danger-icon" onclick="app.logout()" title="Cerrar Sesión">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
             </header>
+
+            <!-- Ticker -->
+            <div class="ticker-wrap">
+                <div class="ticker-move" id="admin-ticker-content">Esperando datos en vivo...</div>
+            </div>
 
             <!-- Stats Cards -->
             <div class="admin-stats-grid">
@@ -114,13 +130,40 @@
                 </div>
             </div>
 
-            <!-- Chart -->
-            <div class="glass-panel admin-chart-panel">
-                <h3 class="section-title">📊 Votos por Mesa Receptora</h3>
-                <div class="chart-container">
-                    <canvas id="chart-votos"></canvas>
+            <!-- Admin Middle Grid (Chart + Ranking) -->
+            <div class="admin-middle-grid">
+                <!-- Chart Barras -->
+                <div class="glass-panel admin-chart-panel" style="margin-bottom:0;">
+                    <h3 class="section-title">📊 Votos por Mesa Receptora</h3>
+                    <div class="chart-container" style="height:250px;">
+                        <canvas id="chart-votos"></canvas>
+                    </div>
+                    <p id="chart-empty" style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">No hay datos de votos todavía.</p>
                 </div>
-                <p id="chart-empty" style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">No hay datos de votos todavía.</p>
+
+                <!-- Distribución y Ranking -->
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Chart Dona -->
+                    <div class="glass-panel" style="padding:20px;">
+                        <h3 class="section-title">🎯 Distribución de Votos</h3>
+                        <div class="chart-container" style="height:150px; position:relative;">
+                            <canvas id="chart-distribucion"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Ranking Top 5 -->
+                    <div class="glass-panel ranking-panel" style="flex:1; padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h3 class="section-title" style="margin:0;">🏆 Top Recintos</h3>
+                            <button id="btn-clear-filter" class="btn btn-secondary btn-small" style="display:none; font-size:0.7rem; padding:4px 8px;" onclick="window._clearFilter()">✖ Limpiar</button>
+                        </div>
+                        <div id="ranking-list" class="ranking-list">
+                            <div class="skeleton-row" style="height:40px; margin-bottom:10px;"></div>
+                            <div class="skeleton-row" style="height:40px; margin-bottom:10px;"></div>
+                            <div class="skeleton-row" style="height:40px; margin-bottom:10px;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Bottom: Create user + User list -->
@@ -201,7 +244,24 @@
                 </button>
             </header>
 
+            <!-- Instalación de Mesa (Asistencia) -->
+            <div class="glass-panel" style="margin-bottom: 20px; background: rgba(59, 130, 246, 0.1); border-color: var(--primary);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 style="color: var(--primary); margin:0;">☀️ Paso 1: Instalación</h3>
+                    <button class="btn btn-danger btn-small sos-flash" onclick="window._reportarSOS()" style="padding:4px 8px; font-size:0.8rem;">🚨 SOS</button>
+                </div>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">Al llegar a tu recinto, confírmanos que ya estás en tu mesa.</p>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <input type="text" id="asistencia-establecimiento" placeholder="Establecimiento (Ej. Escuela Montalvo)" style="padding:10px; font-size:0.9rem;">
+                </div>
+                <button class="btn btn-primary btn-block" id="btn-asistencia" onclick="window._reportarAsistencia()">
+                    📍 Confirmar Asistencia (GPS)
+                </button>
+            </div>
+
+            <!-- Registro de Resultados -->
             <div class="glass-panel">
+                <h3 style="margin-bottom: 20px;">🗳️ Paso 2: Resultados (5:00 PM)</h3>
                 <form id="form-mesa">
                     <div class="form-group">
                         <label for="establecimiento-mesa">Establecimiento de Votación</label>
@@ -214,8 +274,34 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="cantidad-votos">Votos para Fabián Robles</label>
-                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0">
+                        <label for="genero-junta">Género de la Junta</label>
+                        <select id="genero-junta" required style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid var(--surface-border); font-size:1rem; font-family:inherit; background-color:var(--surface); color:var(--text); transition:all 0.3s; margin-bottom: 20px;">
+                            <option value="" disabled selected>Seleccione el género de la junta</option>
+                            <option value="Masculino">Masculino (M)</option>
+                            <option value="Femenino">Femenino (F)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad-votos" style="color:var(--primary); font-weight:bold;">✅ Votos para Fabián Robles</label>
+                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0" style="border-color:var(--primary);">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div class="form-group">
+                            <label for="votos-blancos">⚪ Votos en Blanco</label>
+                            <input type="number" id="votos-blancos" required placeholder="Ej. 5" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="votos-nulos">❌ Votos Nulos</label>
+                            <input type="number" id="votos-nulos" required placeholder="Ej. 10" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="total-sufragantes">👥 Total de Sufragantes (Padrón de la Mesa)</label>
+                        <input type="number" id="total-sufragantes" required placeholder="Ej. 350" min="1">
+                        <small style="color:var(--text-muted); display:block; margin-top:4px;">Debe cuadrar con la suma de los votos registrados.</small>
                     </div>
 
                     <div class="form-group">
@@ -224,24 +310,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Evidencia del Acta (PDF o Foto)</label>
+                        <label for="evidencia-archivo">📸 Evidencia del Acta (PDF o Foto)</label>
                         <div class="file-upload-wrapper">
-                            <input type="file" id="evidencia-archivo" required
-                                accept="application/pdf, image/jpeg, image/png">
-                            <div class="file-upload-ui">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                                <span id="file-name">Toca aquí para seleccionar un archivo</span>
-                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span id="file-name">Toca aquí para seleccionar un archivo</span>
+                            <input type="file" id="evidencia-archivo" accept="image/*,.pdf" required>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-block">
-                        Enviar Resultados
+                    <button type="submit" class="btn btn-primary btn-block" style="font-size: 1.1rem; padding: 16px;">
+                        🚀 Enviar Resultados (Con GPS)
                     </button>
                 </form>
             </div>
@@ -261,6 +343,11 @@
                 </button>
             </header>
 
+            <!-- Ticker -->
+            <div class="ticker-wrap">
+                <div class="ticker-move" id="base-ticker-content">Esperando datos en vivo...</div>
+            </div>
+
             <div class="dashboard-stats glass-panel">
                 <div class="stat-box">
                     <h3>Total Votos Registrados</h3>
@@ -271,11 +358,13 @@
                     <div class="stat-number" id="total-mesas">0</div>
                 </div>
                 <!-- Progress -->
-                <div class="progress-bar-container" style="grid-column: 1 / -1; margin-top: 10px;">
+                <div style="grid-column: 1 / -1; margin-top: 10px;">
                     <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
                         <span>Progreso: <span id="base-progress-text">0%</span></span>
                     </div>
-                    <div class="progress-bar-fill" id="base-progress-fill" style="width: 0%; height: 6px;"></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="base-progress-fill" style="width: 0%; height: 6px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -295,11 +384,12 @@
                                 <th>Votos</th>
                                 <th>Hora</th>
                                 <th>Obs.</th>
+                                <th>GPS</th>
                                 <th>Evidencia</th>
                             </tr>
                         </thead>
                         <tbody id="registros-tbody">
-                            <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Cargando datos...</td></tr>
+                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Cargando datos...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -312,6 +402,41 @@
             </div>
         </section>
 
+        <!-- Vista TV Mode (War Room) -->
+        <section id="view-tv" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; background:#000000; color:#ffffff; padding:40px; box-sizing:border-box; overflow-y:auto; display:none; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-shrink:0;">
+                <h1 style="color:#3b82f6; font-size:3.5rem; margin:0; text-transform:uppercase; letter-spacing:2px; font-weight:900;">📺 WAR ROOM - CNE</h1>
+                <button onclick="window._closeTVMode()" style="background:#ef4444; color:white; border:none; padding:12px 24px; font-size:1.2rem; font-weight:bold; border-radius:8px; cursor:pointer;">✖ Salir Modo TV</button>
+            </div>
+            
+            <!-- Ticker TV -->
+            <div class="ticker-wrap" style="background:#111827; font-size:2rem; padding:20px 0; border-top:2px solid #1f2937; border-bottom:2px solid #1f2937; flex-shrink:0;">
+                <div class="ticker-move" id="tv-ticker-content" style="animation-duration:35s; color:#10b981;">Esperando datos en vivo...</div>
+            </div>
+
+            <!-- Gran Termómetro y Gráfico -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:40px; flex-grow:1;">
+                <!-- Termómetro de Meta -->
+                <div style="background:#111827; border:2px solid #1f2937; border-radius:16px; padding:50px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                    <h2 style="font-size:2.5rem; margin-bottom:30px; color:#9ca3af; text-transform:uppercase; letter-spacing:1px;">VOTOS FABIÁN ROBLES</h2>
+                    <div id="tv-votos-total" style="font-size:10rem; font-weight:900; color:#3b82f6; line-height:1; margin-bottom:30px; text-shadow: 0 0 20px rgba(59,130,246,0.5);">0</div>
+                    <div style="font-size:2rem; color:#9ca3af;">Mesas escrutadas: <span id="tv-mesas-total" style="color:#ffffff; font-weight:bold;">0</span> / <span class="tv-total-juntas">100</span></div>
+                    
+                    <div style="width:100%; background:#374151; height:40px; border-radius:20px; margin-top:40px; overflow:hidden;">
+                        <div id="tv-progress-fill" style="height:100%; width:0%; background:linear-gradient(90deg, #3b82f6, #60a5fa); transition:width 1s ease;"></div>
+                    </div>
+                    <div id="tv-progress-text" style="font-size:1.5rem; margin-top:15px; color:#d1d5db; font-weight:bold;">0% Escrutado</div>
+                </div>
+
+                <!-- Gráfico de Distribución TV -->
+                <div style="background:#111827; border:2px solid #1f2937; border-radius:16px; padding:50px; display:flex; flex-direction:column;">
+                    <h2 style="font-size:2.5rem; margin-bottom:30px; text-align:center; color:#9ca3af; text-transform:uppercase; letter-spacing:1px;">DISTRIBUCIÓN</h2>
+                    <div style="flex-grow:1; position:relative; min-height:400px;">
+                        <canvas id="chart-tv-distribucion"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Modal para ver imágenes/PDFs -->
@@ -330,6 +455,13 @@
                 <!-- El contenido se inyecta por JS -->
             </div>
         </div>
+    </div>
+
+    <!-- Alerta SOS Global (Oculta por defecto) -->
+    <div id="sos-alert-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:red; color:white; padding:20px; text-align:center; font-weight:bold; font-size:1.5rem; border-bottom:4px solid darkred;">
+        🚨 ¡ALERTA SOS EN RECINTO! 🚨 <br>
+        <span id="sos-alert-text" style="font-size:1.2rem; display:block; margin-top:10px;"></span>
+        <button onclick="document.getElementById('sos-alert-banner').style.display='none'" style="margin-top:15px; padding:10px 20px; background:white; color:red; border:none; font-weight:bold; border-radius:8px; cursor:pointer;">Entendido</button>
     </div>
 
     <!-- Notification Toast -->
