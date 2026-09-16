@@ -92,6 +92,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 fetchAlertasActivas();
             })
             .subscribe();
+
+        // Canal en tiempo real para chat
+        supabase.channel('chat-live')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensajes' }, async function(payload) {
+                // Obtenemos el nombre del usuario
+                var usrRes = await supabase.from('usuarios').select('username').eq('id', payload.new.user_id).single();
+                var msgWithUser = Object.assign({}, payload.new);
+                msgWithUser.usuarios = { username: usrRes.data ? usrRes.data.username : 'Usuario' };
+                
+                if (window._appendChatMessage) {
+                    window._appendChatMessage(msgWithUser);
+                }
+                
+                // Mostrar notificación si el chat está cerrado
+                var panel = document.getElementById('chat-panel');
+                if (panel && !panel.classList.contains('active')) {
+                    var fab = document.getElementById('chat-fab');
+                    if (fab) fab.classList.add('has-unread');
+                    audioDing.play().catch(function(e){});
+                }
+            })
+            .subscribe();
     }
 
     try {
@@ -142,6 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 .single();
 
             if (result.error) {
+                if (result.error.code === 'PGRST116') {
+                    throw new Error('Usuario o contraseña incorrectos');
+                }
                 throw new Error('Error Supabase: ' + result.error.message);
             }
             if (!result.data) {
