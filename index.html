@@ -12,7 +12,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5">
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg">
+
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 
 <body class="is-login-screen">
@@ -140,6 +148,12 @@
                         <canvas id="chart-votos"></canvas>
                     </div>
                     <p id="chart-empty" style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">No hay datos de votos todavía.</p>
+                </div>
+
+                <!-- Mapa Interactivo -->
+                <div class="glass-panel" style="margin-bottom:0; grid-column: 1 / -1;">
+                    <h3 class="section-title">🗺️ Mapa Táctico de Escrutinio</h3>
+                    <div id="map-admin" style="height: 350px; border-radius: 12px; z-index: 1;"></div>
                 </div>
 
                 <!-- Distribución y Ranking -->
@@ -381,6 +395,12 @@
                 </div>
             </div>
 
+            <!-- Mapa Interactivo (Equipo Base) -->
+            <div class="glass-panel mt-4">
+                <h3 class="section-title">🗺️ Mapa Táctico</h3>
+                <div id="map-base" style="height: 350px; border-radius: 12px; z-index: 1;"></div>
+            </div>
+
             <div class="glass-panel mt-4">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h3 class="section-title" style="margin:0;">Últimos Registros</h3>
@@ -483,13 +503,49 @@
     <!-- Global Dark Mode Toggle -->
     <button id="btn-dark-mode" class="dark-mode-toggle" title="Alternar Modo Oscuro">🌙</button>
 
+    <!-- Chat Flotante (War Room) -->
+    <div class="chat-fab" id="chat-fab" onclick="window._toggleChat()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </div>
+
+    <div class="chat-panel" id="chat-panel">
+        <div class="chat-header">
+            <span>💬 War Room Chat</span>
+            <button class="close-btn" onclick="window._toggleChat()">✖</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Mensajes aquí -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') window._sendChatMessage()">
+            <button onclick="window._sendChatMessage()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Librerías para Gráficos y Excel -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js.js?v=4"></script>
+    <script src="js.js?v=5"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Registrado'))
+            .catch(e => console.error('Error SW:', e));
+        }
+    </script>
 </body>
 
 </html>

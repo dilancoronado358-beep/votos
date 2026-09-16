@@ -1,0 +1,21 @@
+{
+  "name": "War Room CNE",
+  "short_name": "CNE App",
+  "description": "Sistema de Monitoreo Electoral CNE",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

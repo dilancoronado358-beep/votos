@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.header-username').forEach(function(el) {
                     el.textContent = '👤 ' + currentUser.username;
                 });
+                var fab = document.getElementById('chat-fab');
+                if (fab) fab.style.display = 'flex';
+                fetchChatMessages();
+            } else {
+                var fab = document.getElementById('chat-fab');
+                if (fab) fab.style.display = 'none';
             }
 
             if (viewId === 'admin') if (tvBtn) tvBtn.style.display = 'inline-block';
@@ -263,11 +269,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     canvas.toBlob(function(blob) {
-                        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                        resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
                     }, 'image/jpeg', 0.8); // 80% calidad
                 };
                 img.src = e.target.result;
             };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function fileToBase64(file) {
+        return new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onloadend = function() { resolve(reader.result); };
             reader.readAsDataURL(file);
         });
     }
@@ -351,6 +365,33 @@ document.addEventListener('DOMContentLoaded', function () {
         var loc = await getLocation();
 
         try {
+            var compressedFile = await compressImage(fileInput.files[0]);
+
+            // OFFLINE MODE: Si no hay internet, guardar en cola local
+            if (!navigator.onLine) {
+                var b64 = await fileToBase64(compressedFile);
+                var queue = JSON.parse(localStorage.getItem('offlineVotesQueue') || '[]');
+                queue.push({
+                    establecimiento: establecimiento,
+                    junta_numero: parseInt(junta),
+                    genero: genero,
+                    cantidad_votos: votos,
+                    votos_blancos: blancos,
+                    votos_nulos: nulos,
+                    total_sufragantes: total,
+                    latitud: loc.lat,
+                    longitud: loc.lon,
+                    observaciones: observaciones + ' [Enviado Offline]',
+                    user_id: currentUser.id,
+                    evidencia_b64: b64,
+                    fileName: compressedFile.name
+                });
+                localStorage.setItem('offlineVotesQueue', JSON.stringify(queue));
+                showToast('📴 SIN INTERNET: Voto guardado en cola. Se subirá automáticamente cuando regrese la señal.', 'success');
+                e.target.reset();
+                return;
+            }
+
             // 1. Check duplicates
             var chk = await supabase.from('votos').select('id, evidencia_url').eq('junta_numero', parseInt(junta)).single();
             var existingId = null;
@@ -365,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             btnSubmit.textContent = 'Subiendo (comprimiendo)...';
-            var publicUrl = await uploadFile(fileInput.files[0]);
+            var publicUrl = await uploadFile(compressedFile);
             
             var payload = {
                 establecimiento: establecimiento,
@@ -429,6 +470,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var lstAdmin = document.getElementById('lista-alertas-admin');
 
         var res = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+        window._activeAlerts = res.data || [];
+        
         if (res.error || !res.data || res.data.length === 0) {
             if(pnlBase) pnlBase.style.display = 'none';
             if(pnlAdmin) pnlAdmin.style.display = 'none';
@@ -490,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateBaseStats(baseData);
             renderDashboardTable();
             fetchAlertasActivas();
+            renderMap('map-base', baseData, window._activeAlerts || []);
         } catch (err) {
             if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:red;text-align:center;">Error: ' + err.message + '</td></tr>';
         }
@@ -809,11 +853,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 var chartData = dataToRender.slice().sort(function(a,b){ return a.junta_numero - b.junta_numero; });
                 renderAdminChart(chartData);
                 renderDistChart(dataToRender);
+                renderTrendChart(votosRes.data);
                 
                 // El ranking siempre usa todos los datos para no desaparecer
                 renderRanking(votosRes.data);
                 updateTicker(votosRes.data);
                 fetchAlertasActivas();
+                renderMap('map-admin', votosRes.data, window._activeAlerts || []);
             }
 
             if (!usersRes.error) {
@@ -1187,6 +1233,120 @@ document.addEventListener('DOMContentLoaded', function () {
     window._isTVMode = false;
     var tvDistChart = null;
 
+    // ================================================
+    // MAPA TÁCTICO (LEAFLET)
+    // ================================================
+    var maps = {};
+    var mapMarkers = {};
+
+    function renderMap(mapId, records, alerts) {
+        if (!document.getElementById(mapId)) return;
+        if (typeof L === 'undefined') return;
+
+        if (!maps[mapId]) {
+            maps[mapId] = L.map(mapId).setView([-1.8312, -78.1834], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(maps[mapId]);
+            mapMarkers[mapId] = L.layerGroup().addTo(maps[mapId]);
+        }
+
+        var layer = mapMarkers[mapId];
+        layer.clearLayers();
+        var bounds = [];
+
+        records.forEach(function(r) {
+            if (r.latitud && r.longitud) {
+                var m = L.circleMarker([r.latitud, r.longitud], {
+                    radius: 6, fillColor: '#22c55e', color: '#16a34a', weight: 2, opacity: 1, fillOpacity: 0.8
+                });
+                m.bindPopup('<strong>Mesa ' + (r.junta_numero||'') + '</strong><br>' + (r.establecimiento||''));
+                layer.addLayer(m);
+                bounds.push([r.latitud, r.longitud]);
+            }
+        });
+
+        if (alerts) {
+            var sosIcon = L.divIcon({ className: 'sos-marker-flash', html: '🚨', iconSize: [24, 24] });
+            alerts.forEach(function(a) {
+                if (a.latitud && a.longitud) {
+                    var m = L.marker([a.latitud, a.longitud], { icon: sosIcon });
+                    m.bindPopup('<strong style="color:red;">🚨 SOS ALERTA</strong><br>' + (a.establecimiento||'') + '<br>' + a.mensaje);
+                    layer.addLayer(m);
+                    bounds.push([a.latitud, a.longitud]);
+                } else {
+                    var rec = records.find(function(rx) { return rx.establecimiento === a.establecimiento && rx.latitud; });
+                    if (rec) {
+                        var m2 = L.marker([rec.latitud, rec.longitud], { icon: sosIcon });
+                        m2.bindPopup('<strong style="color:red;">🚨 SOS ALERTA</strong><br>' + (a.establecimiento||'') + '<br>' + a.mensaje);
+                        layer.addLayer(m2);
+                        bounds.push([rec.latitud, rec.longitud]);
+                    }
+                }
+            });
+        }
+
+        if (bounds.length > 0) maps[mapId].fitBounds(bounds, { padding: [20, 20], maxZoom: 14 });
+    }
+
+    // ================================================
+    // GRÁFICO DE TENDENCIA (LÍNEAS)
+    // ================================================
+    var trendChart = null;
+    function renderTrendChart(records) {
+        var canvas = document.getElementById('chart-tendencia');
+        if (!canvas) return;
+        if (typeof Chart === 'undefined') return;
+
+        if (trendChart) trendChart.destroy();
+
+        var buckets = {};
+        records.forEach(function(r) {
+            var d = new Date(r.created_at);
+            var coeff = 1000 * 60 * 15;
+            var rounded = new Date(Math.round(d.getTime() / coeff) * coeff);
+            var timeKey = rounded.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (!buckets[timeKey]) buckets[timeKey] = 0;
+            buckets[timeKey] += r.cantidad_votos;
+        });
+
+        var labels = Object.keys(buckets).sort();
+        var data = labels.map(function(k) { return buckets[k]; });
+
+        var acum = [];
+        var sum = 0;
+        data.forEach(function(val) { sum += val; acum.push(sum); });
+
+        var ctx = canvas.getContext('2d');
+        var isDark = document.body.classList.contains('dark-mode');
+        
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Votos Acumulados',
+                    data: acum,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: isDark ? '#e4e4e7' : '#3f3f46' } },
+                    y: { ticks: { color: isDark ? '#e4e4e7' : '#3f3f46' } }
+                }
+            }
+        });
+    }
+
 
 
     window._openTVMode = function() {
@@ -1263,6 +1423,105 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     };
+
+    // ================================================
+    // CHAT INTERNO (WAR ROOM)
+    // ================================================
+    window._toggleChat = function() {
+        var panel = document.getElementById('chat-panel');
+        var fab = document.getElementById('chat-fab');
+        panel.classList.toggle('active');
+        if (panel.classList.contains('active')) {
+            fab.classList.remove('has-unread');
+            var msgs = document.getElementById('chat-messages');
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+    };
+
+    async function fetchChatMessages() {
+        if (!currentUser) return;
+        var res = await supabase.from('mensajes').select('*, usuarios(username)').order('created_at', { ascending: true }).limit(50);
+        if (res.error) return console.error('Error chat:', res.error);
+        var container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+        res.data.forEach(appendChatMessage);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    window._appendChatMessage = appendChatMessage;
+    function appendChatMessage(msg) {
+        var container = document.getElementById('chat-messages');
+        var isMine = currentUser && msg.user_id === currentUser.id;
+        var div = document.createElement('div');
+        div.className = 'chat-msg ' + (isMine ? 'mine' : 'others');
+        
+        var userHtml = isMine ? '' : '<div class="chat-msg-user">' + (msg.usuarios ? msg.usuarios.username : 'Usuario') + '</div>';
+        div.innerHTML = userHtml + '<div>' + msg.mensaje + '</div>';
+        
+        container.appendChild(div);
+        
+        if (container.scrollHeight - container.scrollTop < container.clientHeight + 100) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    window._sendChatMessage = async function() {
+        if (!currentUser) return;
+        var input = document.getElementById('chat-input');
+        var text = input.value.trim();
+        if (!text) return;
+        
+        input.value = '';
+        try {
+            var res = await supabase.from('mensajes').insert([{
+                user_id: currentUser.id,
+                mensaje: text
+            }]);
+            if (res.error) throw res.error;
+        } catch(e) {
+            showToast('Error enviando mensaje: ' + e.message, 'error');
+            input.value = text;
+        }
+    };
+
+    // ================================================
+    // PWA OFFLINE SYNC
+    // ================================================
+    function base64ToFile(b64, filename) {
+        var arr = b64.split(','), mime = arr[0].match(/:(.*?);/)[1];
+        var bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+        return new File([u8arr], filename, {type:mime});
+    }
+
+    window.addEventListener('online', async function() {
+        showToast('📶 Conexión restaurada. Sincronizando datos pendientes...', 'success');
+        var queue = JSON.parse(localStorage.getItem('offlineVotesQueue') || '[]');
+        if (queue.length === 0) return;
+
+        var failedQueue = [];
+        for (var i = 0; i < queue.length; i++) {
+            var q = queue[i];
+            try {
+                var file = base64ToFile(q.evidencia_b64, q.fileName || 'evidencia_offline.jpg');
+                var publicUrl = await uploadFile(file);
+                
+                var payload = Object.assign({}, q);
+                delete payload.evidencia_b64;
+                delete payload.fileName;
+                payload.evidencia_url = publicUrl;
+
+                var res = await supabase.from('votos').insert([payload]);
+                if (res.error) throw res.error;
+            } catch(e) {
+                console.error('Error sync offline:', e);
+                failedQueue.push(q);
+            }
+        }
+        localStorage.setItem('offlineVotesQueue', JSON.stringify(failedQueue));
+        if(failedQueue.length === 0) showToast('✅ Todos los votos offline han sido sincronizados.');
+        else showToast('⚠️ Algunos votos no se pudieron subir. Se reintentará.', 'error');
+    });
 
     // ================================================
     // VINCULAR EVENTOS
