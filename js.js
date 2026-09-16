@@ -194,6 +194,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function logout() {
         localStorage.removeItem('appUser');
         currentUser = null;
+        
+        var panel = document.getElementById('chat-panel');
+        if (panel) panel.classList.remove('active');
+        var fab = document.getElementById('chat-fab');
+        if (fab) fab.style.display = 'none';
+
         navigate('auth');
         showToast('Sesión cerrada');
     }
