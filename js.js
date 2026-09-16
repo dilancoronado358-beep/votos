@@ -170,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     async function submitVote(e) {
         e.preventDefault();
+        var establecimiento = document.getElementById('establecimiento-mesa').value.trim();
         var junta = document.getElementById('numero-junta').value;
         var votos = document.getElementById('cantidad-votos').value;
         var fileInput = document.getElementById('evidencia-archivo');
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             var publicUrl = await uploadFile(fileInput.files[0]);
             var ins = await supabase.from('votos').insert([{
+                establecimiento: establecimiento,
                 junta_numero: parseInt(junta),
                 cantidad_votos: parseInt(votos),
                 evidencia_url: publicUrl,
@@ -225,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 records.forEach(function(rec) {
                     var t = new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     var tr = document.createElement('tr');
-                    tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + '</strong></td>' +
+                    tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + '</strong><br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
                         '<td style="color:var(--success);font-weight:bold;">' + rec.cantidad_votos + '</td>' +
                         '<td style="color:var(--text-muted);font-size:0.85rem;">' + t + '</td>' +
                         '<td><button class="btn-view-doc" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button></td>';
@@ -320,7 +322,9 @@ document.addEventListener('DOMContentLoaded', function () {
         canvas.style.display = 'block';
         emptyMsg.style.display = 'none';
 
-        var labels = records.map(function(r) { return 'Mesa ' + r.junta_numero; });
+        var labels = records.map(function(r) {
+            return r.establecimiento ? r.establecimiento + ' (M' + r.junta_numero + ')' : 'Mesa ' + r.junta_numero;
+        });
         var data = records.map(function(r) { return r.cantidad_votos; });
 
         if (adminChart) adminChart.destroy();
