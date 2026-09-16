@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema CNE - Fabián Robles</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="is-login-screen">
+
+    <!-- Background Elements -->
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+
+    <div class="app-container">
+
+        <!-- Vista de Autenticación (Login) -->
+        <section id="view-auth" class="view active">
+            <div class="login-glass-panel">
+                <div class="logo-container" style="width: 100px; height: 100px; margin: 0 auto 15px;">
+                    <img src="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg"
+                        alt="Logo Fabián Robles" class="app-logo">
+                </div>
+                <h1 class="login-title" style="text-align: center;">Bienvenido</h1>
+
+                <form id="form-login">
+                    <div class="form-group text-left">
+                        <label for="login-email" class="login-label">Usuario</label>
+                        <input type="text" id="login-email" class="login-input" required placeholder="ej: admin">
+                    </div>
+                    <div class="form-group text-left">
+                        <label for="login-password" class="login-label">Contraseña</label>
+                        <input type="password" id="login-password" class="login-input" required placeholder="••••••••">
+                    </div>
+
+                    <div class="login-options">
+                        <label class="remember-me">
+                            <input type="checkbox"> Recordarme
+                        </label>
+                        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-login-special" id="btn-login">
+                            Ingresar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Vista de Administrador (Dashboard Premium) -->
+        <section id="view-admin" class="view">
+            <header class="app-header">
+                <div class="admin-header-brand">
+                    <img src="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg" alt="Logo" class="admin-logo">
+                    <div>
+                        <h2 style="margin:0; font-size:1.1rem;">Panel de Administración</h2>
+                        <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Campaña Fabián Robles</p>
+                    </div>
+                </div>
+                <button class="btn-icon btn-danger-icon" onclick="app.logout()" title="Cerrar Sesión">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="admin-stats-grid">
+                <div class="admin-stat-card accent-blue">
+                    <div class="stat-card-icon">🗳️</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-total-votos">—</div>
+                        <div class="stat-card-label">Total Votos</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card accent-green">
+                    <div class="stat-card-icon">📋</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-total-mesas">—</div>
+                        <div class="stat-card-label">Mesas Reportadas</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card accent-navy">
+                    <div class="stat-card-icon">👥</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-total-usuarios">—</div>
+                        <div class="stat-card-label">Usuarios</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="glass-panel admin-chart-panel">
+                <h3 class="section-title">📊 Votos por Mesa Receptora</h3>
+                <div class="chart-container">
+                    <canvas id="chart-votos"></canvas>
+                </div>
+                <p id="chart-empty" style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">No hay datos de votos todavía.</p>
+            </div>
+
+            <!-- Bottom: Create user + User list -->
+            <div class="admin-bottom-grid">
+                <!-- Create user form -->
+                <div class="glass-panel">
+                    <h3 class="section-title">➕ Crear Usuario</h3>
+                    <form id="form-create-user">
+                        <div class="form-group">
+                            <label for="new-username">Nombre de Usuario</label>
+                            <input type="text" id="new-username" required placeholder="Ej. juan_mesa1">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Contraseña</label>
+                            <input type="text" id="new-password" required placeholder="Contraseña">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-role">Rol del Usuario</label>
+                            <select id="new-role" class="custom-select">
+                                <option value="mesa">📋 Mesa Receptora</option>
+                                <option value="base">🖥️ Equipo Base (Dashboard)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Crear Usuario
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Users Table -->
+                <div class="glass-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h3 class="section-title" style="margin:0;">👤 Usuarios del Sistema</h3>
+                        <button class="btn-refresh" onclick="window._reloadUsers()" title="Actualizar">🔄</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Vista de Mesa Receptora -->
+        <section id="view-mesa" class="view">
+            <header class="app-header">
+                <div style="width: 24px;"></div> <!-- Espaciador -->
+                <h2>Registro de Mesa</h2>
+                <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </header>
+
+            <div class="glass-panel">
+                <form id="form-mesa">
+                    <div class="form-group">
+                        <label for="numero-junta">Número de Junta Receptora</label>
+                        <input type="number" id="numero-junta" required placeholder="Ej. 12" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cantidad-votos">Votos para Fabián Robles</label>
+                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Evidencia del Acta (PDF o Foto)</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="evidencia-archivo" required
+                                accept="application/pdf, image/jpeg, image/png">
+                            <div class="file-upload-ui">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span id="file-name">Toca aquí para seleccionar un archivo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Enviar Resultados
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Vista del Equipo Base -->
+        <section id="view-base" class="view">
+            <header class="app-header">
+                <div style="width: 24px;"></div> <!-- Espaciador -->
+                <h2>Panel Central</h2>
+                <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </header>
+
+            <div class="dashboard-stats glass-panel">
+                <div class="stat-box">
+                    <h3>Total Votos Registrados</h3>
+                    <div class="stat-number" id="total-votos">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Mesas Escrutadas</h3>
+                    <div class="stat-number" id="total-mesas">0</div>
+                </div>
+                <button class="btn btn-secondary btn-small btn-block mt-3" onclick="window._clearData()">
+                    Limpiar Datos (Test)
+                </button>
+            </div>
+
+            <div class="glass-panel mt-4">
+                <h3 class="section-title">Últimos Registros</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Junta</th>
+                                <th>Votos</th>
+                                <th>Hora</th>
+                                <th>Acta</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registros-tbody">
+                            <!-- Los datos se insertarán aquí dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    No hay registros todavía.
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Modal para ver imágenes/PDFs -->
+    <div id="modal-evidencia" class="modal">
+        <div class="modal-content glass-panel">
+            <header class="modal-header">
+                <h3>Evidencia de Junta</h3>
+                <button class="btn-icon" onclick="window._closeModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </header>
+            <div class="modal-body" id="modal-body-content">
+                <!-- El contenido se inyecta por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">Notificación</div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js.js?v=3"></script>
+</body>
+
+</html>
