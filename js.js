@@ -59,27 +59,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     audioDing.play().catch(function(e) { console.log('Audio autoplay prevent', e); });
                     showToast('🔔 ¡Mesa ' + payload.new.junta_numero + ' ha reportado ' + payload.new.cantidad_votos + ' votos!', 'success');
                 }
-                // Si el usuario está en base, recargar dashboard
-                if (currentView === 'base') {
-                    renderDashboard();
-                }
-                // Si el admin está viendo el panel, recargar también
-                if (currentView === 'admin') {
-                    renderAdminDashboard();
-                }
-                // Actualizar modo TV si está activo
+                if (currentView === 'base') renderDashboard();
+                if (currentView === 'admin') renderAdminDashboard();
                 if (window._isTVMode) window._refreshTV();
             })
             .subscribe();
 
         // Canal en tiempo real para Alertas SOS
         supabase.channel('alertas-live')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, function(payload) {
-                var a = payload.new;
-                audioSiren.loop = true;
-                audioSiren.play().catch(function(e){ console.log('Siren prevent', e); });
-                document.getElementById('sos-alert-text').textContent = 'Recinto: ' + a.establecimiento;
-                document.getElementById('sos-alert-banner').style.display = 'block';
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'alertas' }, function(payload) {
+                if (payload.eventType === 'INSERT') {
+                    var a = payload.new;
+                    audioSiren.loop = true;
+                    audioSiren.play().catch(function(e){ console.log('Siren prevent', e); });
+                    document.getElementById('sos-alert-text').textContent = 'Recinto: ' + a.establecimiento;
+                    document.getElementById('sos-alert-banner').style.display = 'block';
+                }
+                fetchAlertasActivas();
             })
             .subscribe();
     }
@@ -418,6 +414,38 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     // DASHBOARD (EQUIPO BASE)
     // ================================================
+    async function fetchAlertasActivas() {
+        var pnlBase = document.getElementById('panel-alertas-base');
+        var lstBase = document.getElementById('lista-alertas-base');
+        var pnlAdmin = document.getElementById('panel-alertas-admin');
+        var lstAdmin = document.getElementById('lista-alertas-admin');
+
+        var res = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+        if (res.error || !res.data || res.data.length === 0) {
+            if(pnlBase) pnlBase.style.display = 'none';
+            if(pnlAdmin) pnlAdmin.style.display = 'none';
+            return;
+        }
+
+        var htmlAlertas = '';
+        res.data.forEach(function(a) {
+            var d = new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            htmlAlertas += '<div style="background: white; padding: 10px 15px; border-radius: 8px; border-left: 5px solid var(--danger); display: flex; justify-content: space-between; align-items: center;">' +
+                '<div><strong>' + a.establecimiento + '</strong> (' + d + ')<br><span style="color:var(--text-muted); font-size:0.9rem;">' + a.mensaje + '</span></div>' +
+                '<button class="btn btn-secondary btn-small" onclick="window._resolverAlerta(\'' + a.id + '\')">Marcar Resuelta</button>' +
+            '</div>';
+        });
+
+        if(pnlBase && lstBase) { pnlBase.style.display = 'block'; lstBase.innerHTML = htmlAlertas; }
+        if(pnlAdmin && lstAdmin) { pnlAdmin.style.display = 'block'; lstAdmin.innerHTML = htmlAlertas; }
+    }
+
+    window._resolverAlerta = async function(id) {
+        if(!confirm('¿Seguro que esta emergencia fue resuelta?')) return;
+        await supabase.from('alertas').update({ resuelta: true }).eq('id', id);
+        fetchAlertasActivas();
+    };
+
     function getSkeletonTableRows(cols) {
         var html = '';
         for (var i = 0; i < 5; i++) {
@@ -453,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function () {
             basePage = 1; // reset page on new fetch
             updateBaseStats(baseData);
             renderDashboardTable();
+            fetchAlertasActivas();
         } catch (err) {
             tbody.innerHTML = '<tr><td colspan="5" style="color:red;text-align:center;">Error: ' + err.message + '</td></tr>';
         }
@@ -694,6 +723,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // El ranking siempre usa todos los datos para no desaparecer
                 renderRanking(votosRes.data);
                 updateTicker(votosRes.data);
+                fetchAlertasActivas();
             }
 
             if (!usersRes.error) {
@@ -896,6 +926,8 @@ document.addEventListener('DOMContentLoaded', function () {
             rankingList.innerHTML += html;
         });
     }
+
+
 
     // Setup Admin Search Listener
     var adminSearchInput = document.getElementById('admin-search-users');
