@@ -31,7 +31,8 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* No centrar verticalmente en móvil */
+    padding: 0;
 }
 
 /* Background animated shapes */
@@ -74,8 +75,10 @@ body {
 .app-container {
     width: 100%;
     max-width: 600px;
-    padding: 20px;
+    padding: 20px 16px;
     position: relative;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 /* Views Management */
@@ -855,17 +858,160 @@ body.is-login-screen .bg-shape {
     color: white;
 }
 
-/* Responsive admin */
-@media (max-width: 640px) {
+/* =========================================
+   RESPONSIVE - MÓVIL COMPLETO
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    /* Cuerpo: login centrado, resto desde arriba */
+    body {
+        align-items: flex-start;
+    }
+
+    /* Contenedor principal: ocupa todo el ancho */
+    .app-container {
+        max-width: 100%;
+        padding: 12px 12px 40px 12px;
+        min-height: 100vh;
+    }
+
+    /* Admin view más ancho en móvil también */
+    .app-container:has(#view-admin.active) {
+        max-width: 100%;
+    }
+
+    /* Glass panel: menos padding */
+    .glass-panel {
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+
+    /* Logo más pequeño */
+    .logo-container {
+        width: 90px;
+        height: 90px;
+    }
+
+    /* Login panel más compacto */
+    .login-glass-panel {
+        padding: 28px 20px;
+        border-radius: 12px;
+    }
+
+    .login-title {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+
+    /* Header más compacto */
+    .app-header {
+        margin-bottom: 16px;
+        padding: 0 4px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    /* ADMIN: estadísticas en fila de 3 compactas */
+    .admin-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .admin-stat-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 12px 8px;
+        gap: 6px;
+        border-left: none;
+        border-top: 3px solid transparent;
+    }
+
+    .admin-stat-card.accent-blue { border-top-color: #3b82f6; }
+    .admin-stat-card.accent-green { border-top-color: #10b981; }
+    .admin-stat-card.accent-navy { border-top-color: #0a2540; }
+
+    .stat-card-icon { font-size: 1.4rem; }
+    .stat-card-number { font-size: 1.3rem; }
+    .stat-card-label { font-size: 0.65rem; }
+
+    /* Gráfico más bajo en móvil */
+    .chart-container {
+        height: 160px;
+    }
+
+    .admin-chart-panel {
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+
+    /* Bottom grid: en columna */
+    .admin-bottom-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .admin-bottom-grid .glass-panel {
+        padding: 18px 16px;
+    }
+
+    /* Header marca admin más compacto */
+    .admin-header-brand h2 {
+        font-size: 1rem !important;
+    }
+
+    .admin-header-brand p {
+        display: none; /* Ocultar subtítulo en móvil */
+    }
+
+    /* Tabla más compacta */
+    .data-table th,
+    .data-table td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+
+    /* Inputs más compactos */
+    input[type="number"],
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+        font-size: 1rem;
+        padding: 12px 14px;
+    }
+
+    /* Vista login: envuelve el panel centrado verticalmente */
+    #view-auth.active {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 0;
+    }
+
+    .login-glass-panel {
+        max-width: 100%;
+    }
+}
+
+/* Pantallas muy pequeñas (< 380px) */
+@media (max-width: 380px) {
     .admin-stats-grid {
         grid-template-columns: 1fr;
     }
 
-    .admin-bottom-grid {
-        grid-template-columns: 1fr;
+    .admin-stat-card {
+        flex-direction: row;
+        text-align: left;
+        border-top: none;
+        border-left: 3px solid transparent;
     }
 
-    .stat-card-number {
-        font-size: 1.4rem;
-    }
+    .admin-stat-card.accent-blue { border-left-color: #3b82f6; }
+    .admin-stat-card.accent-green { border-left-color: #10b981; }
+    .admin-stat-card.accent-navy { border-left-color: #0a2540; }
 }
