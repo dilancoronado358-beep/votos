@@ -25,23 +25,31 @@ document.addEventListener('DOMContentLoaded', function () {
     // NAVEGACIÓN
     // ================================================
     function navigate(viewId) {
-        var oldView = document.getElementById('view-' + currentView);
-        if (oldView) oldView.classList.remove('active');
         currentView = viewId;
-        var newView = document.getElementById('view-' + currentView);
-        if (newView) {
-            newView.classList.add('active');
-        } else {
-            console.error('Vista no encontrada: view-' + viewId);
-            return;
-        }
+        document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
+        var tvBtn = document.getElementById('btn-open-tv-admin');
+        if (tvBtn) tvBtn.style.display = 'none';
+
         if (viewId === 'auth') {
             document.body.classList.add('is-login-screen');
+            document.getElementById('view-auth').classList.add('active');
         } else {
             document.body.classList.remove('is-login-screen');
+            var viewMap = { 'admin': 'view-admin', 'mesa': 'view-mesa', 'base': 'view-base' };
+            var targetId = viewMap[viewId] || 'view-auth';
+            document.getElementById(targetId).classList.add('active');
+            
+            // Set header username
+            if (currentUser && currentUser.username) {
+                document.querySelectorAll('.header-username').forEach(function(el) {
+                    el.textContent = '👤 ' + currentUser.username;
+                });
+            }
+
+            if (viewId === 'admin') if (tvBtn) tvBtn.style.display = 'inline-block';
+            if (viewId === 'base') renderDashboard();
+            if (viewId === 'admin') renderAdminDashboard();
         }
-        if (viewId === 'base') renderDashboard();
-        if (viewId === 'admin') renderAdminDashboard();
     }
 
     // ================================================
@@ -460,12 +468,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function fetchDashboardData() {
         var tbody = document.getElementById('registros-tbody');
-        tbody.innerHTML = getSkeletonTableRows(6);
+        if (tbody) tbody.innerHTML = getSkeletonTableRows(6);
         
         try {
-            var res = await supabase.from('votos').select('*').order('created_at', { ascending: false });
+            var res = await supabase.from('votos').select('*, usuarios(username)').order('created_at', { ascending: false });
             if (res.error) throw res.error;
-            baseData = res.data;
+            baseData = res.data || [];
             
             // Search filter
             var searchTerm = document.getElementById('base-search-votos') ? document.getElementById('base-search-votos').value.toLowerCase() : '';
@@ -483,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
             renderDashboardTable();
             fetchAlertasActivas();
         } catch (err) {
-            tbody.innerHTML = '<tr><td colspan="5" style="color:red;text-align:center;">Error: ' + err.message + '</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:red;text-align:center;">Error: ' + err.message + '</td></tr>';
         }
     }
 
@@ -581,27 +589,109 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    window._exportVotosCSV = function() {
+    window._exportarExcelAvanzado = async function() {
+        if (typeof ExcelJS === 'undefined' || typeof saveAs === 'undefined') {
+            showToast('Librerías Excel no cargadas aún.', 'error'); return;
+        }
         if (baseFiltered.length === 0) return showToast('No hay datos para exportar', 'error');
-        var headers = ['Junta', 'Género', 'Establecimiento', 'Votos', 'Blancos', 'Nulos', 'Total Padrón', 'Latitud', 'Longitud', 'Observaciones', 'Fecha/Hora', 'Link Evidencia'];
-        var rows = [headers];
-        baseFiltered.forEach(function(r) {
-            rows.push([
-                r.junta_numero,
-                r.genero || '',
-                r.establecimiento || '',
-                r.cantidad_votos,
-                r.votos_blancos || 0,
-                r.votos_nulos || 0,
-                r.total_sufragantes || 0,
-                r.latitud || '',
-                r.longitud || '',
-                r.observaciones || '',
-                new Date(r.created_at).toLocaleString(),
-                r.evidencia_url
-            ]);
-        });
-        exportToCSV('votos_reporte.csv', rows);
+
+        var btn = document.querySelector('button[onclick="window._exportarExcelAvanzado()"]');
+        var oldText = btn ? btn.textContent : 'Exportar Excel';
+        if(btn) { btn.disabled = true; btn.textContent = 'Generando...'; }
+
+        try {
+            var wb = new ExcelJS.Workbook();
+            wb.creator = 'App CNE';
+            wb.created = new Date();
+
+            // Hoja 1: Resumen
+            var ws1 = wb.addWorksheet('Resumen Ejecutivo');
+            ws1.columns = [{ width: 25 }, { width: 20 }];
+            ws1.getCell('A1').value = 'REPORTE EJECUTIVO DE ESCRUTINIO';
+            ws1.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            ws1.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+            ws1.mergeCells('A1:E1');
+
+            var totalVotos = baseFiltered.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+            var totalBlancos = baseFiltered.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+            var totalNulos = baseFiltered.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+
+            ws1.getCell('A3').value = 'Total Votos Fabián:';
+            ws1.getCell('B3').value = totalVotos;
+            ws1.getCell('B3').font = { bold: true, color: { argb: 'FF3B82F6' }, size: 14 };
+
+            ws1.getCell('A4').value = 'Votos en Blanco:';
+            ws1.getCell('B4').value = totalBlancos;
+
+            ws1.getCell('A5').value = 'Votos Nulos:';
+            ws1.getCell('B5').value = totalNulos;
+
+            ws1.getCell('A6').value = 'Mesas Reportadas:';
+            ws1.getCell('B6').value = baseFiltered.length + ' de ' + TOTAL_JUNTAS;
+
+            // Gráfico
+            var canvas = document.getElementById('chart-distribucion');
+            if (canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var imgId = wb.addImage({ base64: imgData, extension: 'png' });
+                ws1.addImage(imgId, {
+                    tl: { col: 0, row: 8 },
+                    ext: { width: 500, height: 300 }
+                });
+            }
+
+            // Hoja 2: Datos
+            var ws2 = wb.addWorksheet('Datos de Mesas');
+            ws2.columns = [
+                { header: 'Ingresado Por', key: 'usr', width: 15 },
+                { header: 'Junta', key: 'junta', width: 10 },
+                { header: 'Género', key: 'gen', width: 15 },
+                { header: 'Recinto/Establecimiento', key: 'est', width: 35 },
+                { header: 'Votos Fabián', key: 'votos', width: 15 },
+                { header: 'Blancos', key: 'bla', width: 10 },
+                { header: 'Nulos', key: 'nul', width: 10 },
+                { header: 'Total Padrón', key: 'pad', width: 15 },
+                { header: 'Latitud', key: 'lat', width: 15 },
+                { header: 'Longitud', key: 'lon', width: 15 },
+                { header: 'Observaciones', key: 'obs', width: 40 },
+                { header: 'Fecha', key: 'fecha', width: 20 },
+                { header: 'Evidencia', key: 'url', width: 30 }
+            ];
+
+            ws2.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            ws2.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+            ws2.autoFilter = 'A1:M1';
+
+            baseFiltered.forEach(function(r) {
+                var usrName = (r.usuarios && r.usuarios.username) ? r.usuarios.username : 'Desconocido';
+                ws2.addRow({
+                    usr: usrName,
+                    junta: r.junta_numero,
+                    gen: r.genero || '',
+                    est: r.establecimiento || '',
+                    votos: r.cantidad_votos,
+                    bla: r.votos_blancos || 0,
+                    nul: r.votos_nulos || 0,
+                    pad: r.total_sufragantes || 0,
+                    lat: r.latitud || '',
+                    lon: r.longitud || '',
+                    obs: r.observaciones || '',
+                    fecha: new Date(r.created_at).toLocaleString(),
+                    url: r.evidencia_url
+                });
+            });
+
+            var buffer = await wb.xlsx.writeBuffer();
+            var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, 'Reporte_Escrutinio.xlsx');
+            showToast('Excel generado exitosamente', 'success');
+
+        } catch (e) {
+            console.error('Error ExcelJS:', e);
+            showToast('Error al generar Excel: ' + e.message, 'error');
+        } finally {
+            if(btn) { btn.disabled = false; btn.textContent = oldText; }
+        }
     };
 
     // Ticker Update
@@ -687,13 +777,13 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     async function fetchAdminData() {
-        var tbody = document.getElementById('users-tbody');
-        if (tbody) tbody.innerHTML = getSkeletonTableRows(3);
+        var usersTbody = document.getElementById('users-tbody');
+        if (usersTbody) usersTbody.innerHTML = getSkeletonTableRows(3);
         
         try {
             var [votosRes, usersRes] = await Promise.all([
-                supabase.from('votos').select('*').order('created_at', { ascending: false }),
-                supabase.from('usuarios').select('*').order('username')
+                supabase.from('votos').select('*, usuarios(username)').order('created_at', { ascending: false }),
+                supabase.from('usuarios').select('*').order('created_at', { ascending: false })
             ]);
 
             // Stats
@@ -943,18 +1033,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    window._exportUsersCSV = function() {
-        if (usersFiltered.length === 0) return showToast('No hay datos para exportar', 'error');
-        var headers = ['Username', 'Rol', 'Fecha Creación'];
-        var rows = [headers];
-        usersFiltered.forEach(function(u) {
-            rows.push([
-                u.username,
-                u.role,
-                new Date(u.created_at).toLocaleString()
-            ]);
-        });
-        exportToCSV('usuarios_sistema.csv', rows);
+    window._exportUsersExcel = async function() {
+        if (typeof ExcelJS === 'undefined' || typeof saveAs === 'undefined') {
+            showToast('Librerías Excel no cargadas', 'error'); return;
+        }
+        if (usersFiltered.length === 0) return showToast('No hay usuarios', 'error');
+        try {
+            var wb = new ExcelJS.Workbook();
+            var ws = wb.addWorksheet('Usuarios');
+            ws.columns = [
+                { header: 'Usuario', key: 'usr', width: 20 },
+                { header: 'Rol', key: 'rol', width: 20 },
+                { header: 'Fecha Creación', key: 'fecha', width: 20 }
+            ];
+            ws.getRow(1).font = { bold: true };
+            usersFiltered.forEach(function(u) {
+                ws.addRow({ usr: u.username, rol: u.role, fecha: new Date(u.created_at).toLocaleString() });
+            });
+            var buffer = await wb.xlsx.writeBuffer();
+            var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, 'Usuarios_CNE.xlsx');
+        } catch(e) {
+            showToast('Error Excel: ' + e.message, 'error');
+        }
     };
 
     async function deleteUser(userId, username) {
@@ -1085,6 +1186,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     window._isTVMode = false;
     var tvDistChart = null;
+
+
 
     window._openTVMode = function() {
         if (!document.fullscreenElement) {

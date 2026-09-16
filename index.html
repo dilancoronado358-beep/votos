@@ -71,7 +71,8 @@
                         <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Campaña Fabián Robles</p>
                     </div>
                 </div>
-                <div style="display:flex; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
                     <button class="btn btn-secondary btn-small" onclick="window._exportPDF()" title="Exportar Informe Ejecutivo a PDF" id="btn-export-pdf">
                         📄 PDF
                     </button>
@@ -198,7 +199,7 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                         <h3 class="section-title" style="margin:0;">👤 Usuarios</h3>
                         <div>
-                            <button class="btn-refresh" onclick="window._exportUsersCSV()" title="Exportar a CSV">📊 CSV</button>
+                            <button class="btn-refresh" onclick="window._exportUsersExcel()" title="Exportar a Excel">📊 Excel</button>
                             <button class="btn-refresh" onclick="window._reloadUsers()" title="Actualizar">🔄</button>
                         </div>
                     </div>
@@ -235,9 +236,11 @@
             <header class="app-header">
                 <div style="width: 24px;"></div> <!-- Espaciador -->
                 <h2>Registro de Mesa</h2>
-                <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
+                    <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
@@ -334,9 +337,11 @@
             <header class="app-header">
                 <div style="width: 24px;"></div> <!-- Espaciador -->
                 <h2>Panel Central</h2>
-                <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
+                    <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
@@ -379,7 +384,7 @@
             <div class="glass-panel mt-4">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h3 class="section-title" style="margin:0;">Últimos Registros</h3>
-                    <button class="btn-refresh" onclick="window._exportVotosCSV()" title="Exportar a CSV">📊 Exportar CSV</button>
+                    <button class="btn-refresh" onclick="window._exportarExcelAvanzado()" title="Exportar a Excel">📊 Exportar Excel</button>
                 </div>
                 
                 <input type="text" id="base-search-votos" class="search-input" placeholder="🔍 Buscar por mesa o establecimiento...">
@@ -478,11 +483,13 @@
     <!-- Global Dark Mode Toggle -->
     <button id="btn-dark-mode" class="dark-mode-toggle" title="Alternar Modo Oscuro">🌙</button>
 
-    <!-- Fondo dinámico (Solo en Login) -->
+    <!-- Librerías para Gráficos y Excel -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js.js?v=3"></script>
+    <script src="js.js?v=4"></script>
 </body>
 
 </html>
