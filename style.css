@@ -1,19 +1,29 @@
 :root {
+    /* Modo Claro (Por Defecto) */
     --primary: #0a2540;
-    /* Azul Marino (15%) */
     --primary-hover: #07192c;
     --secondary: #e2e8f0;
     --secondary-hover: #cbd5e1;
     --accent: #dc2626;
-    /* Rojo (10%) */
     --background: #f8fafc;
-    /* Blanco/Claro (75%) */
     --surface: rgba(255, 255, 255, 0.9);
     --surface-border: rgba(10, 37, 64, 0.1);
     --text: #0a2540;
     --text-muted: #64748b;
     --success: #10b981;
     --danger: #dc2626;
+}
+
+body.dark-mode {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary: #27272a;
+    --secondary-hover: #3f3f46;
+    --background: #121212;
+    --surface: rgba(24, 24, 24, 0.95);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --text: #f4f4f5;
+    --text-muted: #a1a1aa;
 }
 
 * {
@@ -285,22 +295,30 @@ h3 {
 input[type="number"],
 input[type="text"],
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+textarea {
     width: 100%;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--surface-border);
-    color: var(--text);
     padding: 14px 16px;
     border-radius: 12px;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    color: var(--primary);
+    font-family: 'Inter', sans-serif;
     outline: none;
     transition: all 0.3s;
+}
+
+body.dark-mode input, body.dark-mode textarea {
+    background: rgba(15, 23, 42, 0.8);
+    color: var(--text);
 }
 
 input[type="number"]:focus,
 input[type="text"]:focus,
 input[type="email"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus,
+textarea:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(10, 37, 64, 0.1);
 }
@@ -413,9 +431,72 @@ input[type="password"]:focus {
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 30px;
     color: var(--text-muted);
     font-style: italic;
+}
+
+/* Nuevos Componentes (Search, Progreso, Paginación, Dark Mode Toggle) */
+.search-input {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background: var(--secondary);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--success);
+    transition: width 0.4s ease-out;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn-page {
+    background: var(--background);
+    border: 1px solid var(--surface-border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dark-mode-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-view-doc {

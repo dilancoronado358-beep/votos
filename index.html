@@ -97,6 +97,21 @@
                         <div class="stat-card-label">Usuarios</div>
                     </div>
                 </div>
+                <!-- Botón Limpiar Datos -->
+                <button class="btn btn-secondary btn-small btn-block mt-3" style="grid-column: 1 / -1;" onclick="window._clearData()">
+                    Limpiar Datos (Test)
+                </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="glass-panel progress-panel" style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="font-size:0.9rem; font-weight:600;">Progreso del Escrutinio</span>
+                    <span id="admin-progress-text" style="font-size:0.9rem; font-weight:600; color:var(--primary);">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="admin-progress-fill" style="width: 0%;"></div>
+                </div>
             </div>
 
             <!-- Chart -->
@@ -138,9 +153,15 @@
                 <!-- Users Table -->
                 <div class="glass-panel">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                        <h3 class="section-title" style="margin:0;">👤 Usuarios del Sistema</h3>
-                        <button class="btn-refresh" onclick="window._reloadUsers()" title="Actualizar">🔄</button>
+                        <h3 class="section-title" style="margin:0;">👤 Usuarios</h3>
+                        <div>
+                            <button class="btn-refresh" onclick="window._exportUsersCSV()" title="Exportar a CSV">📊 CSV</button>
+                            <button class="btn-refresh" onclick="window._reloadUsers()" title="Actualizar">🔄</button>
+                        </div>
                     </div>
+                    
+                    <input type="text" id="admin-search-users" class="search-input" placeholder="🔍 Buscar usuario...">
+                    
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -154,6 +175,12 @@
                                 <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Cargando...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="pagination-controls" id="users-pagination">
+                        <button id="users-prev" class="btn-page" disabled>Anterior</button>
+                        <span id="users-page-info">Página 1 de 1</span>
+                        <button id="users-next" class="btn-page" disabled>Siguiente</button>
                     </div>
                 </div>
             </div>
@@ -189,6 +216,11 @@
                     <div class="form-group">
                         <label for="cantidad-votos">Votos para Fabián Robles</label>
                         <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones (Opcional)</label>
+                        <textarea id="observaciones" rows="2" placeholder="Ej. Faltaron papeletas, llegó tarde..."></textarea>
                     </div>
 
                     <div class="form-group">
@@ -238,30 +270,44 @@
                     <h3>Mesas Escrutadas</h3>
                     <div class="stat-number" id="total-mesas">0</div>
                 </div>
-                <button class="btn btn-secondary btn-small btn-block mt-3" onclick="window._clearData()">
-                    Limpiar Datos (Test)
-                </button>
+                <!-- Progress -->
+                <div class="progress-bar-container" style="grid-column: 1 / -1; margin-top: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                        <span>Progreso: <span id="base-progress-text">0%</span></span>
+                    </div>
+                    <div class="progress-bar-fill" id="base-progress-fill" style="width: 0%; height: 6px;"></div>
+                </div>
             </div>
 
             <div class="glass-panel mt-4">
-                <h3 class="section-title">Últimos Registros</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 class="section-title" style="margin:0;">Últimos Registros</h3>
+                    <button class="btn-refresh" onclick="window._exportVotosCSV()" title="Exportar a CSV">📊 Exportar CSV</button>
+                </div>
+                
+                <input type="text" id="base-search-votos" class="search-input" placeholder="🔍 Buscar por mesa o establecimiento...">
+
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Junta</th>
+                                <th>Mesa / Establ.</th>
                                 <th>Votos</th>
                                 <th>Hora</th>
-                                <th>Acta</th>
+                                <th>Obs.</th>
+                                <th>Evidencia</th>
                             </tr>
                         </thead>
                         <tbody id="registros-tbody">
-                            <!-- Los datos se insertarán aquí dinámicamente -->
+                            <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Cargando datos...</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <div id="empty-state" class="empty-state" style="display: none;">
-                    No hay registros todavía.
+                <!-- Pagination -->
+                <div class="pagination-controls" id="votos-pagination">
+                    <button id="votos-prev" class="btn-page" disabled>Anterior</button>
+                    <span id="votos-page-info">Página 1 de 1</span>
+                    <button id="votos-next" class="btn-page" disabled>Siguiente</button>
                 </div>
             </div>
         </section>
@@ -289,7 +335,10 @@
     <!-- Notification Toast -->
     <div id="toast" class="toast">Notificación</div>
 
-    <!-- Chart.js -->
+    <!-- Global Dark Mode Toggle -->
+    <button id="btn-dark-mode" class="dark-mode-toggle" title="Alternar Modo Oscuro">🌙</button>
+
+    <!-- Fondo dinámico (Solo en Login) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
