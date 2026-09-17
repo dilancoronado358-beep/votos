@@ -1152,11 +1152,14 @@ document.addEventListener('DOMContentLoaded', function () {
     window._reloadUsers = fetchAdminData;
 
     window._clearData = async function() {
-        if (!confirm('¿Estás seguro de que quieres eliminar TODOS los votos y actas de prueba? Esta acción no se puede deshacer.')) return;
+        if (!confirm('¿Estás seguro de que quieres eliminar TODOS los datos (votos, actas, alertas, chat)? Los usuarios NO se borrarán. Esta acción no se puede deshacer.')) return;
         
         try {
-            // Eliminar todos los votos (usamos neq para machear todos)
+            await supabase.from('mensajes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from('alertas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from('asistencias').delete().neq('id', '00000000-0000-0000-0000-000000000000');
             var res = await supabase.from('votos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            
             if (res.error) throw res.error;
             
             showToast('Datos limpiados correctamente', 'success');
