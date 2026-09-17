@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!panel || !lista) return;
 
         try {
-            var res = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+            var res = await supabase.from('alertas').select('*, usuarios(username)').eq('resuelta', false).order('created_at', { ascending: false });
             if (res.error) throw res.error;
             var data = res.data || [];
             
@@ -184,12 +184,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 panel.style.display = 'block';
                 var html = '';
                 data.forEach(function(a) {
+                    var user = a.usuarios ? a.usuarios.username : 'Desconocido';
                     var h = new Date(a.created_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
                     html += `
                         <div style="background:rgba(255,255,255,0.8); padding:12px; border-radius:8px; border-left:4px solid var(--danger);">
                             <div style="font-weight:bold; color:var(--danger); font-size:1rem;">📌 ${a.establecimiento}</div>
                             <div style="font-size:0.85rem; color:var(--text); margin-top:4px;">💬 ${a.mensaje}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">⏱️ ${h}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">👤 ${user} &bull; ⏱️ ${h}</div>
                         </div>
                     `;
                 });
@@ -1676,7 +1677,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Alertas SOS
         var alertasFeed = document.getElementById('tv-alertas-feed');
         if (alertasFeed) {
-            var resAlertas = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+            var resAlertas = await supabase.from('alertas').select('*, usuarios(username)').eq('resuelta', false).order('created_at', { ascending: false });
             var alertas = resAlertas.data || [];
             var labelHTML = '<div style="font-size:0.6rem; color:#f87171; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:700;">🚨 ALERTAS SOS (' + alertas.length + ')</div>';
             if (alertas.length === 0) {
@@ -1684,10 +1685,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 var aHTML = labelHTML;
                 alertas.forEach(function(a) {
+                    var user = a.usuarios ? a.usuarios.username : 'Desconocido';
                     var h = new Date(a.created_at).toLocaleTimeString('es-EC', { hour:'2-digit', minute:'2-digit' });
                     aHTML += `<div style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:6px; padding:6px 8px; margin-bottom:4px;">
                         <div style="font-size:0.75rem; font-weight:bold; color:#f87171;">🚨 ${a.establecimiento}</div>
-                        <div style="font-size:0.65rem; color:#9ca3af;">${a.mensaje} &bull; ${h}</div>
+                        <div style="font-size:0.65rem; color:#fca5a5; margin-bottom:2px;">${a.mensaje}</div>
+                        <div style="font-size:0.65rem; color:#9ca3af;">👤 ${user} &bull; ${h}</div>
                     </div>`;
                 });
                 alertasFeed.innerHTML = aHTML;
