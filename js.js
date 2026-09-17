@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     sendPushNotification('🚨 ALERTA SOS 🚨', { body: a.establecimiento + ': ' + a.mensaje, icon: 'https://cdn-icons-png.flaticon.com/512/564/564276.png' });
                 }
                 fetchAlertasActivas();
+                if (window._isTVMode) window._refreshTV();
             })
             .subscribe();
 
@@ -166,8 +167,43 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem('appUser');
     }
 
+    window.fetchAlertasActivas = async function() {
+        var panel = document.getElementById('panel-alertas-base');
+        var lista = document.getElementById('lista-alertas-base');
+        if (!panel || !lista) return;
+
+        try {
+            var res = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+            if (res.error) throw res.error;
+            var data = res.data || [];
+            
+            if (data.length === 0) {
+                panel.style.display = 'none';
+                lista.innerHTML = '';
+            } else {
+                panel.style.display = 'block';
+                var html = '';
+                data.forEach(function(a) {
+                    var h = new Date(a.created_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <div style="background:rgba(255,255,255,0.8); padding:12px; border-radius:8px; border-left:4px solid var(--danger);">
+                            <div style="font-weight:bold; color:var(--danger); font-size:1rem;">📌 ${a.establecimiento}</div>
+                            <div style="font-size:0.85rem; color:var(--text); margin-top:4px;">💬 ${a.mensaje}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">⏱️ ${h}</div>
+                        </div>
+                    `;
+                });
+                lista.innerHTML = html;
+            }
+        } catch (e) {
+            console.error('Error fetching alertas:', e);
+        }
+    };
+
     // Activar Realtime siempre (para cualquier rol logueado)
     setupRealtime();
+    fetchAlertasActivas(); // Primera carga de alertas
+
 
     // ================================================
     // LOGIN
@@ -183,6 +219,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // Habilitar audio tras primer click (politica de navegadores)
     document.addEventListener('click', function() { _getAudioCtx(); }, { once: true });
+    
+    // Un "pop" muy suave para notificaciones normales
     var audioDing = {
         play: function() {
             return new Promise(function(resolve) {
@@ -191,18 +229,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     var o = ctx.createOscillator(); var g = ctx.createGain();
                     o.connect(g); g.connect(ctx.destination);
                     o.type = 'sine';
-                    o.frequency.setValueAtTime(880, ctx.currentTime);
-                    o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-                    g.gain.setValueAtTime(0.4, ctx.currentTime);
-                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-                    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.5);
+                    o.frequency.setValueAtTime(600, ctx.currentTime);
+                    g.gain.setValueAtTime(0, ctx.currentTime);
+                    g.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2);
                     resolve();
                 } catch(e) { resolve(); }
             });
         }
     };
+    
     var _sirenInterval = null;
     var _sirenTimeout = null;
+    // Un doble-tap suave para SOS (nada de sirenas estridentes)
     var audioSiren = {
         loop: true,
         play: function() {
@@ -210,23 +250,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     var ctx = _getAudioCtx();
                     var burst = function() {
-                        var o = ctx.createOscillator(); var g = ctx.createGain();
-                        o.connect(g); g.connect(ctx.destination);
-                        o.type = 'sawtooth';
-                        o.frequency.setValueAtTime(600, ctx.currentTime);
-                        o.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.4);
-                        o.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.8);
-                        g.gain.setValueAtTime(0.35, ctx.currentTime);
-                        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
-                        o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.9);
+                        var t = ctx.currentTime;
+                        // Primer tap
+                        var o1 = ctx.createOscillator(); var g1 = ctx.createGain();
+                        o1.connect(g1); g1.connect(ctx.destination);
+                        o1.type = 'sine'; o1.frequency.setValueAtTime(400, t);
+                        g1.gain.setValueAtTime(0, t);
+                        g1.gain.linearRampToValueAtTime(0.15, t + 0.02);
+                        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                        o1.start(t); o1.stop(t + 0.2);
+                        
+                        // Segundo tap
+                        var o2 = ctx.createOscillator(); var g2 = ctx.createGain();
+                        o2.connect(g2); g2.connect(ctx.destination);
+                        o2.type = 'sine'; o2.frequency.setValueAtTime(400, t + 0.2);
+                        g2.gain.setValueAtTime(0, t + 0.2);
+                        g2.gain.linearRampToValueAtTime(0.15, t + 0.22);
+                        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                        o2.start(t + 0.2); o2.stop(t + 0.4);
                     };
                     burst();
                     if (audioSiren.loop && !_sirenInterval) {
-                        _sirenInterval = setInterval(burst, 1000);
+                        _sirenInterval = setInterval(burst, 1200);
                         if (_sirenTimeout) clearTimeout(_sirenTimeout);
                         _sirenTimeout = setTimeout(function() {
                             audioSiren.pause();
-                        }, 3000);
+                        }, 3000); 
                     }
                     resolve();
                 } catch(e) { resolve(); }
@@ -237,20 +286,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (_sirenTimeout) { clearTimeout(_sirenTimeout); _sirenTimeout = null; }
         }
     };
-    // Fanfare do-mi-sol-do' para Modo TV (nueva acta)
+    
+    // Un acorde muy sutil para Modo TV
     function _playTVFanfare() {
         try {
             var ctx = _getAudioCtx();
-            [523, 659, 784, 1047].forEach(function(freq, i) {
+            [440, 554, 659].forEach(function(freq, i) { // A mayor suave
                 var o = ctx.createOscillator(); var g = ctx.createGain();
                 o.connect(g); g.connect(ctx.destination);
-                var t = ctx.currentTime + i * 0.13;
-                o.type = 'triangle';
+                var t = ctx.currentTime + i * 0.08;
+                o.type = 'sine';
                 o.frequency.setValueAtTime(freq, t);
                 g.gain.setValueAtTime(0, t);
-                g.gain.linearRampToValueAtTime(0.22, t + 0.06);
-                g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
-                o.start(t); o.stop(t + 0.4);
+                g.gain.linearRampToValueAtTime(0.05, t + 0.05); // Volumen muy bajo (0.05)
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                o.start(t); o.stop(t + 0.5);
             });
         } catch(e) {}
     }
