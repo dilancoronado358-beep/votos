@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     var _sirenInterval = null;
+    var _sirenTimeout = null;
     var audioSiren = {
         loop: true,
         play: function() {
@@ -220,13 +221,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.9);
                     };
                     burst();
-                    if (audioSiren.loop && !_sirenInterval) _sirenInterval = setInterval(burst, 1000);
+                    if (audioSiren.loop && !_sirenInterval) {
+                        _sirenInterval = setInterval(burst, 1000);
+                        if (_sirenTimeout) clearTimeout(_sirenTimeout);
+                        _sirenTimeout = setTimeout(function() {
+                            audioSiren.pause();
+                        }, 3000);
+                    }
                     resolve();
                 } catch(e) { resolve(); }
             });
         },
         pause: function() {
             if (_sirenInterval) { clearInterval(_sirenInterval); _sirenInterval = null; }
+            if (_sirenTimeout) { clearTimeout(_sirenTimeout); _sirenTimeout = null; }
         }
     };
     // Fanfare do-mi-sol-do' para Modo TV (nueva acta)
