@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, function(payload) {
                 if (payload.eventType === 'INSERT') {
                     audioDing.play().catch(function(e) { console.log('Audio autoplay prevent', e); });
+                    if (window._isTVMode) _playTVFanfare();
                     var title = '🔔 Nueva Acta - Mesa ' + payload.new.junta_numero;
                     var body = 'Se reportan ' + payload.new.cantidad_votos + ' votos desde ' + (payload.new.establecimiento || 'Recinto Desconocido');
                     showToast(title + ': ' + payload.new.cantidad_votos + ' votos!', 'success');
@@ -171,6 +172,81 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     // LOGIN
     // ================================================
+    // ================================================
+    // MOTOR DE SONIDO (Web Audio API)
+    // ================================================
+    var _audioCtx = null;
+    function _getAudioCtx() {
+        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (_audioCtx.state === 'suspended') _audioCtx.resume();
+        return _audioCtx;
+    }
+    // Habilitar audio tras primer click (politica de navegadores)
+    document.addEventListener('click', function() { _getAudioCtx(); }, { once: true });
+    var audioDing = {
+        play: function() {
+            return new Promise(function(resolve) {
+                try {
+                    var ctx = _getAudioCtx();
+                    var o = ctx.createOscillator(); var g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(880, ctx.currentTime);
+                    o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+                    g.gain.setValueAtTime(0.4, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.5);
+                    resolve();
+                } catch(e) { resolve(); }
+            });
+        }
+    };
+    var _sirenInterval = null;
+    var audioSiren = {
+        loop: true,
+        play: function() {
+            return new Promise(function(resolve) {
+                try {
+                    var ctx = _getAudioCtx();
+                    var burst = function() {
+                        var o = ctx.createOscillator(); var g = ctx.createGain();
+                        o.connect(g); g.connect(ctx.destination);
+                        o.type = 'sawtooth';
+                        o.frequency.setValueAtTime(600, ctx.currentTime);
+                        o.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.4);
+                        o.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.8);
+                        g.gain.setValueAtTime(0.35, ctx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
+                        o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.9);
+                    };
+                    burst();
+                    if (audioSiren.loop && !_sirenInterval) _sirenInterval = setInterval(burst, 1000);
+                    resolve();
+                } catch(e) { resolve(); }
+            });
+        },
+        pause: function() {
+            if (_sirenInterval) { clearInterval(_sirenInterval); _sirenInterval = null; }
+        }
+    };
+    // Fanfare do-mi-sol-do' para Modo TV (nueva acta)
+    function _playTVFanfare() {
+        try {
+            var ctx = _getAudioCtx();
+            [523, 659, 784, 1047].forEach(function(freq, i) {
+                var o = ctx.createOscillator(); var g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                var t = ctx.currentTime + i * 0.13;
+                o.type = 'triangle';
+                o.frequency.setValueAtTime(freq, t);
+                g.gain.setValueAtTime(0, t);
+                g.gain.linearRampToValueAtTime(0.22, t + 0.06);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+                o.start(t); o.stop(t + 0.4);
+            });
+        } catch(e) {}
+    }
+
     async function login() {
         var username = document.getElementById('login-email').value.trim();
         var password = document.getElementById('login-password').value;
@@ -1430,6 +1506,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
         document.getElementById('view-tv').style.display = 'flex';
         window._isTVMode = true;
+        // Iniciar reloj
+        window._tvClockInterval = setInterval(function() {
+            var clock = document.getElementById('tv-clock');
+            if (clock) clock.textContent = new Date().toLocaleString('es-EC', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        }, 1000);
         window._refreshTV();
     };
 
@@ -1437,6 +1518,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (document.fullscreenElement) document.exitFullscreen();
         window._isTVMode = false;
         document.getElementById('view-tv').style.display = 'none';
+        if (window._tvClockInterval) clearInterval(window._tvClockInterval);
         if (currentUser && currentUser.role) {
             navigate(currentUser.role);
         } else {
@@ -1446,13 +1528,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window._refreshTV = async function() {
         if (!window._isTVMode) return;
-        var res = await supabase.from('votos').select('*').order('created_at', { ascending: false });
+        var res = await supabase.from('votos').select('*, usuarios(username)').order('created_at', { ascending: false });
         if (res.error) return;
         var data = res.data;
 
         var totalVotos = data.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+        var totalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+        var totalNulos = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+        var totalSospecha = data.filter(function(r) {
+            if (!r.total_sufragantes || r.total_sufragantes <= 0) return false;
+            var sum = r.cantidad_votos + (r.votos_blancos||0) + (r.votos_nulos||0);
+            return sum !== r.total_sufragantes || (r.votos_nulos||0) > r.total_sufragantes * 0.15;
+        }).length;
+        
+        // KPIs en header
         document.getElementById('tv-votos-total').textContent = totalVotos.toLocaleString();
+
         document.getElementById('tv-mesas-total').textContent = data.length;
+        var blanEl = document.getElementById('tv-blancos-total');
+        var nulEl = document.getElementById('tv-nulos-total');
+        var sosEl = document.getElementById('tv-sospecha-total');
+        if (blanEl) blanEl.textContent = totalBlancos.toLocaleString();
+        if (nulEl) nulEl.textContent = totalNulos.toLocaleString();
+        if (sosEl) sosEl.textContent = totalSospecha;
         
         var progressPercent = Math.min(100, Math.round((data.length / TOTAL_JUNTAS) * 100));
         document.getElementById('tv-progress-fill').style.width = progressPercent + '%';
@@ -1465,9 +1563,77 @@ document.addEventListener('DOMContentLoaded', function () {
             var tickerHTML = '';
             var recent = data.slice(0, 15);
             recent.forEach(function(r) {
-                tickerHTML += '<span class="ticker-item" style="color:#22c55e;">🟢 Mesa ' + r.junta_numero + ' (' + (r.establecimiento||'') + ') = ' + r.cantidad_votos + ' votos</span> • ';
+                var user = r.usuarios ? r.usuarios.username : 'Veedor';
+                tickerHTML += '<span class="ticker-item" style="color:#22c55e;">🟢 Mesa ' + r.junta_numero + ' (' + (r.establecimiento||'') + ') — ' + r.cantidad_votos + ' votos — enviado por: ' + user + '</span> &nbsp;•&nbsp; ';
             });
             tTV.innerHTML = tickerHTML;
+        }
+
+        // Feed de Actividad Reciente en TV
+        var feed = document.getElementById('tv-activity-feed');
+        if (feed) {
+            var feedHTML = '';
+            data.slice(0, 15).forEach(function(r) {
+                var user = r.usuarios ? r.usuarios.username : 'Veedor';
+                var hora = new Date(r.created_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+                var totalCalc = r.cantidad_votos + (r.votos_blancos || 0) + (r.votos_nulos || 0);
+                var isSospecha = r.total_sufragantes && r.total_sufragantes > 0 && (totalCalc !== r.total_sufragantes || (r.votos_nulos || 0) > r.total_sufragantes * 0.15);
+                var badgeColor = isSospecha ? '#ef4444' : '#22c55e';
+                var badgeText = isSospecha ? '⚠️ REVISAR' : '✓ OK';
+                feedHTML += `<div style="background:rgba(255,255,255,0.04); border:1px solid ${isSospecha ? '#7f1d1d' : 'rgba(255,255,255,0.08)'}; border-left:3px solid ${badgeColor}; border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-shrink:0;">
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:0.85rem; font-weight:bold; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Mesa ${r.junta_numero} ${r.genero ? '('+r.genero.charAt(0)+')' : ''} <span style="background:${badgeColor}; color:#fff; padding:1px 5px; border-radius:3px; font-size:0.6rem; font-weight:bold; margin-left:4px;">${badgeText}</span></div>
+                        <div style="font-size:0.7rem; color:#64748b; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${r.establecimiento || 'Sin recinto'}</div>
+                        <div style="font-size:0.7rem; color:#64748b;">👤 ${user} &nbsp;•&nbsp; 🕐 ${hora}</div>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <div style="font-size:1.2rem; font-weight:bold; color:#3b82f6; line-height:1;">${r.cantidad_votos}</div>
+                        <div style="font-size:0.6rem; color:#475569; margin-top:2px;">B:${r.votos_blancos||0} N:${r.votos_nulos||0}</div>
+                    </div>
+                </div>`;
+            });
+            feed.innerHTML = feedHTML || '<div style="text-align:center; color:#334155; padding:30px; font-size:0.85rem;">Esperando actas...</div>';
+        }
+
+        // Top Mesas
+        var topMesas = document.getElementById('tv-top-mesas');
+        if (topMesas) {
+            var sorted = data.slice().sort(function(a, b) { return b.cantidad_votos - a.cantidad_votos; });
+            var topHTML = '';
+            sorted.slice(0, 20).forEach(function(r, i) {
+                var user = r.usuarios ? r.usuarios.username : '?';
+                var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1) + '.';
+                topHTML += `<div style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); flex-shrink:0;">
+                    <span style="font-size:0.85rem; min-width:22px; text-align:center;">${medal}</span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:0.78rem; font-weight:bold; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Mesa ${r.junta_numero} ${r.genero ? '('+r.genero.charAt(0)+')' : ''}</div>
+                        <div style="font-size:0.65rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.establecimiento || ''} &bull; ${user}</div>
+                    </div>
+                    <div style="font-size:0.95rem; font-weight:bold; color:#3b82f6; flex-shrink:0;">${r.cantidad_votos}</div>
+                </div>`;
+            });
+            topMesas.innerHTML = topHTML || '<div style="text-align:center; color:#334155; padding:20px; font-size:0.8rem;">Sin datos aún...</div>';
+        }
+
+        // Alertas SOS
+        var alertasFeed = document.getElementById('tv-alertas-feed');
+        if (alertasFeed) {
+            var resAlertas = await supabase.from('alertas').select('*').eq('resuelta', false).order('created_at', { ascending: false });
+            var alertas = resAlertas.data || [];
+            var labelHTML = '<div style="font-size:0.6rem; color:#f87171; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:700;">🚨 ALERTAS SOS (' + alertas.length + ')</div>';
+            if (alertas.length === 0) {
+                alertasFeed.innerHTML = labelHTML + '<div style="text-align:center; color:#334155; font-size:0.75rem; padding:8px;">Sin alertas activas ✓</div>';
+            } else {
+                var aHTML = labelHTML;
+                alertas.forEach(function(a) {
+                    var h = new Date(a.created_at).toLocaleTimeString('es-EC', { hour:'2-digit', minute:'2-digit' });
+                    aHTML += `<div style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:6px; padding:6px 8px; margin-bottom:4px;">
+                        <div style="font-size:0.75rem; font-weight:bold; color:#f87171;">🚨 ${a.establecimiento}</div>
+                        <div style="font-size:0.65rem; color:#9ca3af;">${a.mensaje} &bull; ${h}</div>
+                    </div>`;
+                });
+                alertasFeed.innerHTML = aHTML;
+            }
         }
 
         // TV Distribución Chart

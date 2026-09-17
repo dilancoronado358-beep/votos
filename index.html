@@ -15,11 +15,13 @@
     <!-- Manifest PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg">
+    <link rel="apple-touch-icon"
+        href="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg">
 
     <!-- Leaflet CSS for Maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <link rel="stylesheet" href="style.css?v=6">
 </head>
 
@@ -61,7 +63,8 @@
                         <button type="submit" class="btn btn-login-special" id="btn-login">
                             Ingresar
                         </button>
-                        <button type="button" class="btn btn-secondary" onclick="window._openTVMode()" style="font-size: 1.1rem; padding: 12px; border-radius: 12px; font-weight: bold; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: var(--primary);">
+                        <button type="button" class="btn btn-secondary" onclick="window._openTVMode()"
+                            style="font-size: 1.1rem; padding: 12px; border-radius: 12px; font-weight: bold; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); color: var(--primary);">
                             📺 Entrar a Modo TV
                         </button>
                     </div>
@@ -73,19 +76,23 @@
         <section id="view-admin" class="view">
             <header class="app-header">
                 <div class="admin-header-brand">
-                    <img src="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg" alt="Logo" class="admin-logo">
+                    <img src="https://res.cloudinary.com/dtmqftcsr/image/upload/v1776664480/IMG-20260419-WA0107_zci17q.jpg"
+                        alt="Logo" class="admin-logo">
                     <div>
                         <h2 style="margin:0; font-size:1.1rem;">Panel de Administración</h2>
                         <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Campaña Fabián Robles</p>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
-                    <button class="btn btn-secondary btn-small" onclick="window._exportPDF()" title="Exportar Informe Ejecutivo a PDF" id="btn-export-pdf">
+                    <span class="header-username"
+                        style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
+                    <button class="btn btn-secondary btn-small" onclick="window._exportPDF()"
+                        title="Exportar Informe Ejecutivo a PDF" id="btn-export-pdf">
                         📄 PDF
                     </button>
                     <button class="btn-icon btn-danger-icon" onclick="app.logout()" title="Cerrar Sesión">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                             <polyline points="16 17 21 12 16 7"></polyline>
                             <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -123,7 +130,8 @@
                     </div>
                 </div>
                 <!-- Botón Limpiar Datos -->
-                <button class="btn btn-secondary btn-small btn-block mt-3" style="grid-column: 1 / -1;" onclick="window._clearData()">
+                <button class="btn btn-secondary btn-small btn-block mt-3" style="grid-column: 1 / -1;"
+                    onclick="window._clearData()">
                     Limpiar Datos (Test)
                 </button>
             </div>
@@ -132,7 +140,8 @@
             <div class="glass-panel progress-panel" style="margin-bottom: 20px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                     <span style="font-size:0.9rem; font-weight:600;">Progreso del Escrutinio</span>
-                    <span id="admin-progress-text" style="font-size:0.9rem; font-weight:600; color:var(--primary);">0%</span>
+                    <span id="admin-progress-text"
+                        style="font-size:0.9rem; font-weight:600; color:var(--primary);">0%</span>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" id="admin-progress-fill" style="width: 0%;"></div>
@@ -147,7 +156,9 @@
                     <div class="chart-container" style="height:250px;">
                         <canvas id="chart-votos"></canvas>
                     </div>
-                    <p id="chart-empty" style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">No hay datos de votos todavía.</p>
+                    <p id="chart-empty"
+                        style="text-align:center; color:var(--text-muted); font-style:italic; display:none; padding: 20px 0;">
+                        No hay datos de votos todavía.</p>
                 </div>
 
                 <!-- Mapa Interactivo -->
@@ -165,12 +176,15 @@
                             <canvas id="chart-distribucion"></canvas>
                         </div>
                     </div>
-                    
+
                     <!-- Ranking Top 5 -->
                     <div class="glass-panel ranking-panel" style="flex:1; padding:20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                             <h3 class="section-title" style="margin:0;">🏆 Top Recintos</h3>
-                            <button id="btn-clear-filter" class="btn btn-secondary btn-small" style="display:none; font-size:0.7rem; padding:4px 8px;" onclick="window._clearFilter()">✖ Limpiar</button>
+                            <button id="btn-clear-filter" class="btn btn-secondary btn-small"
+                                style="display:none; font-size:0.7rem; padding:4px 8px;"
+                                onclick="window._clearFilter()">✖ Limpiar</button>
                         </div>
                         <div id="ranking-list" class="ranking-list">
                             <div class="skeleton-row" style="height:40px; margin-bottom:10px;"></div>
@@ -213,13 +227,14 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                         <h3 class="section-title" style="margin:0;">👤 Usuarios</h3>
                         <div>
-                            <button class="btn-refresh" onclick="window._exportUsersExcel()" title="Exportar a Excel">📊 Excel</button>
+                            <button class="btn-refresh" onclick="window._exportUsersExcel()" title="Exportar a Excel">📊
+                                Excel</button>
                             <button class="btn-refresh" onclick="window._reloadUsers()" title="Actualizar">🔄</button>
                         </div>
                     </div>
-                    
+
                     <input type="text" id="admin-search-users" class="search-input" placeholder="🔍 Buscar usuario...">
-                    
+
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -230,7 +245,9 @@
                                 </tr>
                             </thead>
                             <tbody id="users-tbody">
-                                <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Cargando...</td></tr>
+                                <tr>
+                                    <td colspan="3" style="text-align:center; color:var(--text-muted);">Cargando...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -251,25 +268,31 @@
                 <div style="width: 24px;"></div> <!-- Espaciador -->
                 <h2>Registro de Mesa</h2>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
+                    <span class="header-username"
+                        style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
                     <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </button>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
             </header>
 
             <!-- Instalación de Mesa (Asistencia) -->
-            <div class="glass-panel" style="margin-bottom: 20px; background: rgba(59, 130, 246, 0.1); border-color: var(--primary);">
+            <div class="glass-panel"
+                style="margin-bottom: 20px; background: rgba(59, 130, 246, 0.1); border-color: var(--primary);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                     <h3 style="color: var(--primary); margin:0;">☀️ Paso 1: Instalación</h3>
-                    <button class="btn btn-danger btn-small sos-flash" onclick="window._reportarSOS()" style="padding:4px 8px; font-size:0.8rem;">🚨 SOS</button>
+                    <button class="btn btn-danger btn-small sos-flash" onclick="window._reportarSOS()"
+                        style="padding:4px 8px; font-size:0.8rem;">🚨 SOS</button>
                 </div>
-                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">Al llegar a tu recinto, confírmanos que ya estás en tu mesa.</p>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">Al llegar a tu recinto,
+                    confírmanos que ya estás en tu mesa.</p>
                 <div class="form-group" style="margin-bottom:12px;">
-                    <input type="text" id="asistencia-establecimiento" placeholder="Establecimiento (Ej. Escuela Montalvo)" style="padding:10px; font-size:0.9rem;">
+                    <input type="text" id="asistencia-establecimiento"
+                        placeholder="Establecimiento (Ej. Escuela Montalvo)" style="padding:10px; font-size:0.9rem;">
                 </div>
                 <button class="btn btn-primary btn-block" id="btn-asistencia" onclick="window._reportarAsistencia()">
                     📍 Confirmar Asistencia (GPS)
@@ -282,7 +305,8 @@
                 <form id="form-mesa">
                     <div class="form-group">
                         <label for="establecimiento-mesa">Establecimiento de Votación</label>
-                        <input type="text" id="establecimiento-mesa" required placeholder="Ej. Escuela Fiscal Juan Montalvo">
+                        <input type="text" id="establecimiento-mesa" required
+                            placeholder="Ej. Escuela Fiscal Juan Montalvo">
                     </div>
 
                     <div class="form-group">
@@ -292,7 +316,8 @@
 
                     <div class="form-group">
                         <label for="genero-junta">Género de la Junta</label>
-                        <select id="genero-junta" required style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid var(--surface-border); font-size:1rem; font-family:inherit; background-color:var(--surface); color:var(--text); transition:all 0.3s; margin-bottom: 20px;">
+                        <select id="genero-junta" required
+                            style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid var(--surface-border); font-size:1rem; font-family:inherit; background-color:var(--surface); color:var(--text); transition:all 0.3s; margin-bottom: 20px;">
                             <option value="" disabled selected>Seleccione el género de la junta</option>
                             <option value="Masculino">Masculino (M)</option>
                             <option value="Femenino">Femenino (F)</option>
@@ -300,8 +325,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="cantidad-votos" style="color:var(--primary); font-weight:bold;">✅ Votos para Fabián Robles</label>
-                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0" style="border-color:var(--primary);">
+                        <label for="cantidad-votos" style="color:var(--primary); font-weight:bold;">✅ Votos para Fabián
+                            Robles</label>
+                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0"
+                            style="border-color:var(--primary);">
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -318,18 +345,21 @@
                     <div class="form-group">
                         <label for="total-sufragantes">👥 Total de Sufragantes (Padrón de la Mesa)</label>
                         <input type="number" id="total-sufragantes" required placeholder="Ej. 350" min="1">
-                        <small style="color:var(--text-muted); display:block; margin-top:4px;">Debe cuadrar con la suma de los votos registrados.</small>
+                        <small style="color:var(--text-muted); display:block; margin-top:4px;">Debe cuadrar con la suma
+                            de los votos registrados.</small>
                     </div>
 
                     <div class="form-group">
                         <label for="observaciones">Observaciones (Opcional)</label>
-                        <textarea id="observaciones" rows="2" placeholder="Ej. Faltaron papeletas, llegó tarde..."></textarea>
+                        <textarea id="observaciones" rows="2"
+                            placeholder="Ej. Faltaron papeletas, llegó tarde..."></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="evidencia-archivo">📸 Evidencia del Acta (PDF o Foto)</label>
                         <div class="file-upload-wrapper">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -352,18 +382,21 @@
                 <div style="width: 24px;"></div> <!-- Espaciador -->
                 <h2>Panel Central</h2>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="header-username" style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
+                    <span class="header-username"
+                        style="font-weight:bold; color:var(--primary); font-size:0.9rem;"></span>
                     <button class="btn-icon" onclick="app.logout()" title="Cerrar Sesión" style="color: var(--danger);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </button>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
             </header>
 
             <!-- Panel de Alertas SOS Activas -->
-            <div id="panel-alertas-base" class="glass-panel" style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1); display: none; margin-bottom: 20px;">
+            <div id="panel-alertas-base" class="glass-panel"
+                style="border-color: var(--danger); background: rgba(239, 68, 68, 0.1); display: none; margin-bottom: 20px;">
                 <h3 style="color: var(--danger); margin-bottom: 10px;">🚨 ALERTAS SOS ACTIVAS</h3>
                 <div id="lista-alertas-base" style="display:flex; flex-direction:column; gap:10px;">
                     <!-- JS inyecta las alertas aquí -->
@@ -404,10 +437,12 @@
             <div class="glass-panel mt-4">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h3 class="section-title" style="margin:0;">Últimos Registros</h3>
-                    <button class="btn-refresh" onclick="window._exportarExcelAvanzado()" title="Exportar a Excel">📊 Exportar Excel</button>
+                    <button class="btn-refresh" onclick="window._exportarExcelAvanzado()" title="Exportar a Excel">📊
+                        Exportar Excel</button>
                 </div>
-                
-                <input type="text" id="base-search-votos" class="search-input" placeholder="🔍 Buscar por mesa o establecimiento...">
+
+                <input type="text" id="base-search-votos" class="search-input"
+                    placeholder="🔍 Buscar por mesa o establecimiento...">
 
                 <div class="table-responsive">
                     <table class="data-table">
@@ -422,7 +457,10 @@
                             </tr>
                         </thead>
                         <tbody id="registros-tbody">
-                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Cargando datos...</td></tr>
+                            <tr>
+                                <td colspan="6" style="text-align:center; color:var(--text-muted);">Cargando datos...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -435,42 +473,139 @@
             </div>
         </section>
 
-        <!-- Vista TV Mode (War Room) -->
-        <section id="view-tv" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; background:#000000; color:#ffffff; padding:40px; box-sizing:border-box; overflow-y:auto; display:none; flex-direction:column;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-shrink:0;">
-                <h1 style="color:#3b82f6; font-size:3.5rem; margin:0; text-transform:uppercase; letter-spacing:2px; font-weight:900;">📺 WAR ROOM - CNE</h1>
-                <button onclick="window._closeTVMode()" style="background:#ef4444; color:white; border:none; padding:12px 24px; font-size:1.2rem; font-weight:bold; border-radius:8px; cursor:pointer;">✖ Salir Modo TV</button>
-            </div>
-            
-            <!-- Ticker TV -->
-            <div class="ticker-wrap" style="background:#111827; font-size:2rem; padding:20px 0; border-top:2px solid #1f2937; border-bottom:2px solid #1f2937; flex-shrink:0;">
-                <div class="ticker-move" id="tv-ticker-content" style="animation-duration:35s; color:#10b981;">Esperando datos en vivo...</div>
-            </div>
+        <!-- Vista TV Mode (War Room) - Pantalla Completa Profesional -->
+        <section id="view-tv"
+            style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; background:#060d1a; color:#fff; box-sizing:border-box; overflow:hidden; display:none; flex-direction:column; font-family:'Inter',sans-serif;">
 
-            <!-- Gran Termómetro y Gráfico -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:40px; flex-grow:1;">
-                <!-- Termómetro de Meta -->
-                <div style="background:#111827; border:2px solid #1f2937; border-radius:16px; padding:50px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
-                    <h2 style="font-size:2.5rem; margin-bottom:30px; color:#9ca3af; text-transform:uppercase; letter-spacing:1px;">VOTOS FABIÁN ROBLES</h2>
-                    <div id="tv-votos-total" style="font-size:10rem; font-weight:900; color:#3b82f6; line-height:1; margin-bottom:30px; text-shadow: 0 0 20px rgba(59,130,246,0.5);">0</div>
-                    <div style="font-size:2rem; color:#9ca3af;">Mesas escrutadas: <span id="tv-mesas-total" style="color:#ffffff; font-weight:bold;">0</span> / <span class="tv-total-juntas">100</span></div>
-                    
-                    <div style="width:100%; background:#374151; height:40px; border-radius:20px; margin-top:40px; overflow:hidden;">
-                        <div id="tv-progress-fill" style="height:100%; width:0%; background:linear-gradient(90deg, #3b82f6, #60a5fa); transition:width 1s ease;"></div>
-                    </div>
-                    <div id="tv-progress-text" style="font-size:1.5rem; margin-top:15px; color:#d1d5db; font-weight:bold;">0% Escrutado</div>
-                </div>
-
-                <!-- Gráfico de Distribución TV -->
-                <div style="background:#111827; border:2px solid #1f2937; border-radius:16px; padding:50px; display:flex; flex-direction:column;">
-                    <h2 style="font-size:2.5rem; margin-bottom:30px; text-align:center; color:#9ca3af; text-transform:uppercase; letter-spacing:1px;">DISTRIBUCIÓN</h2>
-                    <div style="flex-grow:1; position:relative; min-height:400px;">
-                        <canvas id="chart-tv-distribucion"></canvas>
+            <!-- HEADER COMPACTO -->
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:linear-gradient(90deg,#0f172a,#1e3a5f); border-bottom:2px solid #1d4ed8; flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:1.5rem;">📺</span>
+                    <div>
+                        <div
+                            style="font-size:1.2rem; font-weight:900; color:#60a5fa; letter-spacing:2px; text-transform:uppercase; line-height:1;">
+                            WAR ROOM – CNE</div>
+                        <div id="tv-clock" style="font-size:0.7rem; color:#475569; letter-spacing:1px; margin-top:2px;">
+                        </div>
                     </div>
                 </div>
+                <div style="display:flex; gap:20px; align-items:center;">
+                    <div style="text-align:center; padding:4px 16px; border-right:1px solid #1f2937;">
+                        <div style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                            Total Votos</div>
+                        <div id="tv-votos-total"
+                            style="font-size:1.8rem; font-weight:900; color:#3b82f6; text-shadow:0 0 10px rgba(59,130,246,0.6); line-height:1;">
+                            0</div>
+                    </div>
+                    <div style="text-align:center; padding:4px 16px; border-right:1px solid #1f2937;">
+                        <div style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                            Mesas</div>
+                        <div style="font-size:1.8rem; font-weight:900; color:#22c55e; line-height:1;"><span
+                                id="tv-mesas-total">0</span>/<span class="tv-total-juntas">100</span></div>
+                    </div>
+                    <div style="text-align:center; padding:4px 16px; border-right:1px solid #1f2937;">
+                        <div style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                            Blancos</div>
+                        <div id="tv-blancos-total"
+                            style="font-size:1.8rem; font-weight:900; color:#9ca3af; line-height:1;">0</div>
+                    </div>
+                    <div style="text-align:center; padding:4px 16px; border-right:1px solid #1f2937;">
+                        <div style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                            Nulos</div>
+                        <div id="tv-nulos-total"
+                            style="font-size:1.8rem; font-weight:900; color:#ef4444; line-height:1;">0</div>
+                    </div>
+                    <div style="text-align:center; padding:4px 16px; border-right:1px solid #1f2937;">
+                        <div style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px;">
+                            Escrutado</div>
+                        <div id="tv-progress-text"
+                            style="font-size:1.8rem; font-weight:900; color:#f59e0b; line-height:1;">0%</div>
+                    </div>
+                    <div style="width:130px;">
+                        <div
+                            style="font-size:0.55rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+                            Progreso</div>
+                        <div style="width:100%; background:#1f2937; height:10px; border-radius:5px; overflow:hidden;">
+                            <div id="tv-progress-fill"
+                                style="height:100%; width:0%; background:linear-gradient(90deg,#3b82f6,#22d3ee); transition:width 1s ease; border-radius:5px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; padding:4px 16px;">
+                        <div style="font-size:0.55rem; color:#f87171; text-transform:uppercase; letter-spacing:1px;">⚠️
+                            Irregulares</div>
+                        <div id="tv-sospecha-total"
+                            style="font-size:1.8rem; font-weight:900; color:#ef4444; line-height:1;">0</div>
+                    </div>
+                </div>
+                <button onclick="window._closeTVMode()"
+                    style="background:#ef4444; color:white; border:none; padding:6px 14px; font-size:0.85rem; font-weight:bold; border-radius:8px; cursor:pointer; flex-shrink:0;">✖
+                    Salir</button>
             </div>
+
+            <!-- TICKER -->
+            <div class="ticker-wrap"
+                style="background:#0f172a; font-size:0.9rem; padding:6px 0; border-bottom:1px solid #1f2937; flex-shrink:0;">
+                <div class="ticker-move" id="tv-ticker-content"
+                    style="animation-duration:45s; color:#10b981; white-space:nowrap;">Esperando datos en vivo...</div>
+            </div>
+
+            <!-- GRID PRINCIPAL: 3 columnas que usan el espacio restante -->
+            <div
+                style="display:grid; grid-template-columns:260px 1fr 280px; gap:10px; padding:10px; flex:1; overflow:hidden; min-height:0;">
+
+                <!-- COL IZQUIERDA: Donut + mini stats -->
+                <div style="display:flex; flex-direction:column; gap:8px; min-height:0; overflow:hidden;">
+                    <div
+                        style="background:#0f172a; border:1px solid #1e3a5f; border-radius:10px; padding:12px; flex:1; display:flex; flex-direction:column; min-height:0;">
+                        <div
+                            style="font-size:0.6rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:700;">
+                            📊 DISTRIBUCIÓN</div>
+                        <div style="flex:1; position:relative; min-height:0;"><canvas
+                                id="chart-tv-distribucion"></canvas></div>
+                    </div>
+                    <div id="tv-alertas-feed"
+                        style="background:#0f172a; border:1px solid #7f1d1d; border-radius:10px; padding:10px; flex-shrink:0; max-height:160px; overflow-y:auto;">
+                        <div
+                            style="font-size:0.6rem; color:#f87171; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:700;">
+                            🚨 ALERTAS SOS</div>
+                        <div style="text-align:center; color:#334155; font-size:0.75rem; padding:8px;">Sin alertas
+                            activas ✓</div>
+                    </div>
+                </div>
+
+                <!-- COL CENTRAL: Feed de actas recientes -->
+                <div
+                    style="background:#0f172a; border:1px solid #1e3a5f; border-radius:10px; padding:12px; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+                    <div
+                        style="font-size:0.6rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; font-weight:700; flex-shrink:0;">
+                        📋 ÚCTIMAS ACTAS RECIBIDAS</div>
+                    <div id="tv-activity-feed"
+                        style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; scrollbar-width:thin; scrollbar-color:#1f2937 transparent;">
+                        <div style="text-align:center; color:#334155; padding:20px; font-size:0.85rem;">Esperando
+                            actas...</div>
+                    </div>
+                </div>
+
+                <!-- COL DERECHA: Top mesas -->
+                <div
+                    style="background:#0f172a; border:1px solid #1e3a5f; border-radius:10px; padding:12px; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+                    <div
+                        style="font-size:0.6rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; font-weight:700; flex-shrink:0;">
+                        🏆 TOP MESAS POR VOTOS</div>
+                    <div id="tv-top-mesas"
+                        style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:5px; scrollbar-width:thin; scrollbar-color:#1f2937 transparent;">
+                        <div style="text-align:center; color:#334155; padding:20px; font-size:0.8rem;">Sin datos aún...
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- fin grid -->
         </section>
+
     </div>
+
 
     <!-- Modal para ver imágenes/PDFs -->
     <div id="modal-evidencia" class="modal">
@@ -491,10 +626,12 @@
     </div>
 
     <!-- Alerta SOS Global (Oculta por defecto) -->
-    <div id="sos-alert-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:red; color:white; padding:20px; text-align:center; font-weight:bold; font-size:1.5rem; border-bottom:4px solid darkred;">
+    <div id="sos-alert-banner"
+        style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:red; color:white; padding:20px; text-align:center; font-weight:bold; font-size:1.5rem; border-bottom:4px solid darkred;">
         🚨 ¡ALERTA SOS EN RECINTO! 🚨 <br>
         <span id="sos-alert-text" style="font-size:1.2rem; display:block; margin-top:10px;"></span>
-        <button onclick="document.getElementById('sos-alert-banner').style.display='none'" style="margin-top:15px; padding:10px 20px; background:white; color:red; border:none; font-weight:bold; border-radius:8px; cursor:pointer;">Entendido</button>
+        <button onclick="document.getElementById('sos-alert-banner').style.display='none'"
+            style="margin-top:15px; padding:10px 20px; background:white; color:red; border:none; font-weight:bold; border-radius:8px; cursor:pointer;">Entendido</button>
     </div>
 
     <!-- Notification Toast -->
@@ -519,7 +656,8 @@
             <!-- Mensajes aquí -->
         </div>
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') window._sendChatMessage()">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje..."
+                onkeypress="if(event.key === 'Enter') window._sendChatMessage()">
             <button onclick="window._sendChatMessage()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -534,7 +672,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js.js?v=5"></script>
@@ -542,8 +681,8 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('Service Worker Registrado'))
-            .catch(e => console.error('Error SW:', e));
+                .then(() => console.log('Service Worker Registrado'))
+                .catch(e => console.error('Error SW:', e));
         }
     </script>
 </body>
