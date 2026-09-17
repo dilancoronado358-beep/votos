@@ -1611,6 +1611,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ================================================
+    // ARRASTRAR BOTÓN MODO OSCURO
+    // ================================================
+    var darkModeBtn = document.getElementById('btn-dark-mode');
+    if (darkModeBtn) {
+        var isDragging = false;
+        var hasMoved = false;
+        var startX, startY, initialX, initialY;
+
+        function dragStart(e) {
+            if(e.type === 'touchstart') e.preventDefault(); // Evitar scroll al iniciar
+            isDragging = true;
+            hasMoved = false;
+            var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startX = clientX;
+            startY = clientY;
+            initialX = darkModeBtn.offsetLeft;
+            initialY = darkModeBtn.offsetTop;
+            darkModeBtn.style.transition = 'none';
+        }
+
+        function dragMove(e) {
+            if (!isDragging) return;
+            var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            var dx = clientX - startX;
+            var dy = clientY - startY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
+            if (hasMoved && e.cancelable) e.preventDefault(); // Prevent scrolling
+            darkModeBtn.style.left = (initialX + dx) + 'px';
+            darkModeBtn.style.top = (initialY + dy) + 'px';
+            darkModeBtn.style.right = 'auto';
+            darkModeBtn.style.bottom = 'auto';
+        }
+
+        function dragEnd(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            darkModeBtn.style.transition = '';
+        }
+
+        darkModeBtn.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', dragMove, {passive: false});
+        document.addEventListener('mouseup', dragEnd);
+
+        darkModeBtn.addEventListener('touchstart', dragStart, {passive: false});
+        document.addEventListener('touchmove', dragMove, {passive: false});
+        document.addEventListener('touchend', dragEnd);
+
+        // Interceptar click original para no disparar toggle si se arrastró
+        darkModeBtn.addEventListener('click', function(e) {
+            if (hasMoved) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+        }, true);
+    }
+
     initDarkMode();
 
     console.log('App lista. Vista:', currentView);
