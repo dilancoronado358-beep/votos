@@ -59,6 +59,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================================================
+    // NOTIFICACIONES PUSH (ESCRITORIO)
+    // ================================================
+    function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    }
+
+    function sendPushNotification(title, options) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            // Verificar si el documento está visible, para no spamear si ya está viéndolo
+            if (document.hidden) {
+                var n = new Notification(title, options);
+                n.onclick = function() {
+                    window.focus();
+                    this.close();
+                };
+            }
+        }
+    }
+
+    // ================================================
     // VERIFICAR SESIÓN GUARDADA + REALTIME
     // ================================================
     function setupRealtime() {
@@ -71,7 +93,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }, function(payload) {
                 if (payload.eventType === 'INSERT') {
                     audioDing.play().catch(function(e) { console.log('Audio autoplay prevent', e); });
-                    showToast('🔔 ¡Mesa ' + payload.new.junta_numero + ' ha reportado ' + payload.new.cantidad_votos + ' votos!', 'success');
+                    var title = '🔔 Nueva Acta - Mesa ' + payload.new.junta_numero;
+                    var body = 'Se reportan ' + payload.new.cantidad_votos + ' votos desde ' + (payload.new.establecimiento || 'Recinto Desconocido');
+                    showToast(title + ': ' + payload.new.cantidad_votos + ' votos!', 'success');
+                    sendPushNotification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/190/190411.png' });
                 }
                 if (currentView === 'base') renderDashboard();
                 if (currentView === 'admin') renderAdminDashboard();
@@ -88,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     audioSiren.play().catch(function(e){ console.log('Siren prevent', e); });
                     document.getElementById('sos-alert-text').textContent = 'Recinto: ' + a.establecimiento;
                     document.getElementById('sos-alert-banner').style.display = 'block';
+                    sendPushNotification('🚨 ALERTA SOS 🚨', { body: a.establecimiento + ': ' + a.mensaje, icon: 'https://cdn-icons-png.flaticon.com/512/564/564276.png' });
                 }
                 fetchAlertasActivas();
             })
@@ -105,12 +131,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     window._appendChatMessage(msgWithUser);
                 }
                 
-                // Mostrar notificación si el chat está cerrado
+                // Mostrar notificación si el chat está cerrado o en background
                 var panel = document.getElementById('chat-panel');
                 if (panel && !panel.classList.contains('active')) {
                     var fab = document.getElementById('chat-fab');
                     if (fab) fab.classList.add('has-unread');
                     audioDing.play().catch(function(e){});
+                    sendPushNotification('💬 Mensaje War Room', { body: msgWithUser.usuarios.username + ': ' + payload.new.mensaje, icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' });
+                } else if (document.hidden) {
+                    sendPushNotification('💬 Mensaje War Room', { body: msgWithUser.usuarios.username + ': ' + payload.new.mensaje, icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png' });
                 }
             })
             .subscribe();
@@ -177,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem('appUser', JSON.stringify(result.data));
             showToast('¡Bienvenido, ' + result.data.username + '!');
             document.getElementById('form-login').reset();
+            requestNotificationPermission(); // Pedir permisos al loguear
             navigate(result.data.role);
 
         } catch (err) {
