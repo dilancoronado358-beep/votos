@@ -639,6 +639,16 @@ document.addEventListener('DOMContentLoaded', function () {
             var obsText = rec.observaciones ? '<span style="color:var(--danger); font-size:0.8rem;" title="' + rec.observaciones + '">⚠️ ' + rec.observaciones + '</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
             var genText = rec.genero === 'Masculino' ? ' (M)' : (rec.genero === 'Femenino' ? ' (F)' : '');
             
+            var totalCalculado = rec.cantidad_votos + (rec.votos_blancos || 0) + (rec.votos_nulos || 0);
+            var isFraud = false;
+            if (rec.total_sufragantes && rec.total_sufragantes > 0) {
+                if (totalCalculado !== rec.total_sufragantes) isFraud = true;
+                if ((rec.votos_nulos || 0) > (rec.total_sufragantes * 0.15)) isFraud = true;
+            }
+            
+            var fraudBadge = isFraud ? '<span style="background:var(--danger); color:white; padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:bold; margin-left:5px;">⚠️ SOSPECHA</span>' : '';
+            var btnImpugnar = isFraud ? '<button class="btn-delete" style="background:#b91c1c; margin-top:5px; font-size:0.7rem; padding:4px 8px; width:100%;" onclick="window._generateImpugnacion(\'' + btoa(encodeURIComponent(JSON.stringify(rec))) + '\')">📄 Oficio PDF</button>' : '';
+
             var mapLink = (rec.latitud && rec.longitud) 
                 ? '<a href="https://www.google.com/maps/search/?api=1&query=' + rec.latitud + ',' + rec.longitud + '" target="_blank" style="color:var(--primary); text-decoration:none; font-size:1.2rem;" title="Ver en Mapa">📍</a>'
                 : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
@@ -646,12 +656,12 @@ document.addEventListener('DOMContentLoaded', function () {
             var tr = document.createElement('tr');
             tr.className = 'animate-row';
             tr.style.animationDelay = (idx * 50) + 'ms';
-            tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + genText + '</strong><br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
+            tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + genText + '</strong>' + fraudBadge + '<br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
                 '<td style="color:var(--success);font-weight:bold;">' + rec.cantidad_votos + '</td>' +
                 '<td style="color:var(--text-muted);font-size:0.85rem;">' + t + '</td>' +
                 '<td>' + obsText + '</td>' +
                 '<td style="text-align:center;">' + mapLink + '</td>' +
-                '<td><button class="btn-view-doc" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button></td>';
+                '<td><button class="btn-view-doc" style="width:100%; margin-bottom:5px;" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button>' + btnImpugnar + '</td>';
             tbody.appendChild(tr);
         });
 
@@ -1668,6 +1678,122 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, true);
     }
+
+    // ================================================
+    // GENERADOR LEGAL DE IMPUGNACIÓN (PDF)
+    // ================================================
+    window._generateImpugnacion = function(b64Data) {
+        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+            return showToast('El generador de PDF aún está cargando. Intenta de nuevo.', 'error');
+        }
+        var rec = JSON.parse(decodeURIComponent(atob(b64Data)));
+        var d = new Date().toLocaleDateString('es-EC', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        showToast('Generando PDF Legal...', 'success');
+
+        var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        var pageW = doc.internal.pageSize.getWidth();
+        var margin = 20;
+        var contentW = pageW - margin * 2;
+        var y = 20;
+
+        // ---- ENCABEZADO ----
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('CONSEJO NACIONAL ELECTORAL', pageW / 2, y, { align: 'center' });
+        y += 8;
+        doc.setFontSize(12);
+        doc.text('JUNTA PROVINCIAL ELECTORAL', pageW / 2, y, { align: 'center' });
+        y += 7;
+        doc.setFontSize(11);
+        // Subrayado manual
+        var titleText = 'FORMULARIO DE IMPUGNACI\u00d3N DE ESCRUTINIO';
+        var titleW = doc.getTextWidth(titleText);
+        doc.text(titleText, pageW / 2, y, { align: 'center' });
+        doc.setLineWidth(0.3);
+        doc.line(pageW / 2 - titleW / 2, y + 1, pageW / 2 + titleW / 2, y + 1);
+        y += 15;
+
+        // ---- FECHA ----
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.text('Quito, ' + d, pageW - margin, y, { align: 'right' });
+        y += 12;
+
+        // ---- CUERPO ----
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        var intro = 'Se\u00f1ores Vocales de la Junta Provincial Electoral:';
+        doc.text(intro, margin, y);
+        y += 10;
+
+        var parrafo1 = 'Yo, en mi calidad de Delegado/Procurador de la campa\u00f1a pol\u00edtica de Fabi\u00e1n Robles,' +
+            ' comparezco ante ustedes y presento formal IMPUGNACI\u00d3N Y RECLAMACI\u00d3N NUM\u00c9RICA a' +
+            ' los resultados del escrutinio de la Mesa Receptora del Voto N\u00b0 ' + rec.junta_numero +
+            ' ' + (rec.genero || '') + ', ubicada en el recinto electoral ' + (rec.establecimiento || 'No especificado') + '.';
+        var parrafo1Lines = doc.splitTextToSize(parrafo1, contentW);
+        doc.text(parrafo1Lines, margin, y);
+        y += parrafo1Lines.length * 6 + 8;
+
+        // ---- FUNDAMENTOS ----
+        doc.setFont('helvetica', 'bold');
+        doc.text('FUNDAMENTOS DE HECHO:', margin, y);
+        y += 8;
+
+        doc.setFont('helvetica', 'normal');
+        var parrafo2 = 'Durante el proceso de escrutinio, nuestro sistema de control electoral detect\u00f3 inconsistencias' +
+            ' matem\u00e1ticas severas que vician de nulidad el acta levantada. Los datos reportados son:';
+        var parrafo2Lines = doc.splitTextToSize(parrafo2, contentW);
+        doc.text(parrafo2Lines, margin, y);
+        y += parrafo2Lines.length * 6 + 8;
+
+        // ---- TABLA DE DATOS ----
+        var colW1 = contentW * 0.65;
+        var colW2 = contentW * 0.35;
+        var rowH = 9;
+        var tableData = [
+            ['Total Sufragantes (Padr\u00f3n):', String(rec.total_sufragantes || 'N/A')],
+            ['Votos V\u00e1lidos (F. Robles):', String(rec.cantidad_votos)],
+            ['Votos Blancos:', String(rec.votos_blancos || 0)],
+            ['Votos Nulos:', String(rec.votos_nulos || 0)]
+        ];
+        tableData.forEach(function(row, i) {
+            doc.setFillColor(i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 245 : 255, i % 2 === 0 ? 245 : 255);
+            doc.rect(margin, y, colW1, rowH, 'FD');
+            doc.rect(margin + colW1, y, colW2, rowH, 'FD');
+            doc.setFont('helvetica', 'normal');
+            doc.text(row[0], margin + 2, y + 6);
+            doc.setFont('helvetica', 'bold');
+            doc.text(row[1], margin + colW1 + 2, y + 6);
+            y += rowH;
+        });
+        y += 10;
+
+        // ---- CONCLUSIÓN ----
+        doc.setFont('helvetica', 'normal');
+        var parrafo3 = 'Estas irregularidades contravienen lo estipulado en el C\u00f3digo de la Democracia, ya sea por' +
+            ' inconsistencia num\u00e9rica (la suma no cuadra con los sufragantes) o porcentaje an\u00f3malo de nulos/blancos.' +
+            ' Por lo cual solicitamos la apertura de urnas y recuento voto a voto de la mencionada junta.' +
+            ' Adjuntamos evidencia fotogr\u00e1fica del acta adulterada como anexo a este documento.';
+        var parrafo3Lines = doc.splitTextToSize(parrafo3, contentW);
+        doc.text(parrafo3Lines, margin, y);
+        y += parrafo3Lines.length * 6 + 25;
+
+        // ---- FIRMA ----
+        var firmaX = pageW / 2;
+        doc.setLineWidth(0.5);
+        doc.line(firmaX - 35, y, firmaX + 35, y);
+        y += 6;
+        doc.setFont('helvetica', 'bold');
+        doc.text('FIRMA DEL DELEGADO POL\u00cdTICO', firmaX, y, { align: 'center' });
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.text('Campa\u00f1a Fabi\u00e1n Robles', firmaX, y, { align: 'center' });
+
+        // ---- GUARDAR ----
+        doc.save('Impugnacion_Mesa_' + rec.junta_numero + '.pdf');
+    };
+
 
     initDarkMode();
 
