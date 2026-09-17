@@ -1621,7 +1621,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var startX, startY, initialX, initialY;
 
         function dragStart(e) {
-            if(e.type === 'touchstart') e.preventDefault(); // Evitar scroll al iniciar
             isDragging = true;
             hasMoved = false;
             var clientX = e.touches ? e.touches[0].clientX : e.clientX;
