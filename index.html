@@ -59,8 +59,25 @@
                         <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                     </div>
 
+                    <!-- ACEPTACIÓN LEGAL -->
+                    <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:14px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
+                        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.82rem; color:var(--text-muted); line-height:1.4;">
+                            <input type="checkbox" id="chk-terminos" style="margin-top:2px; accent-color:var(--primary); width:16px; height:16px; flex-shrink:0;" onchange="window._checkLegalBoxes()">
+                            <span>He leído y acepto los
+                                <a href="#" onclick="window._openLegal('terminos'); return false;" style="color:var(--primary); font-weight:600; text-decoration:underline;">Términos y Condiciones</a>
+                                de uso de esta plataforma.
+                            </span>
+                        </label>
+                        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.82rem; color:var(--text-muted); line-height:1.4;">
+                            <input type="checkbox" id="chk-privacidad" style="margin-top:2px; accent-color:var(--primary); width:16px; height:16px; flex-shrink:0;" onchange="window._checkLegalBoxes()">
+                            <span>He leído y acepto la
+                                <a href="#" onclick="window._openLegal('privacidad'); return false;" style="color:var(--primary); font-weight:600; text-decoration:underline;">Política de Privacidad y Cookies</a>.
+                            </span>
+                        </label>
+                    </div>
+
                     <div class="text-center" style="display:flex; gap:10px; flex-direction:column;">
-                        <button type="submit" class="btn btn-login-special" id="btn-login">
+                        <button type="submit" class="btn btn-login-special" id="btn-login" disabled style="opacity:0.5; cursor:not-allowed;">
                             Ingresar
                         </button>
                         <button type="button" class="btn btn-secondary" onclick="window._openTVMode()"
@@ -786,6 +803,126 @@
             </header>
             <div class="modal-body" id="modal-body-content">
                 <!-- El contenido se inyecta por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Términos y Condiciones -->
+    <div id="modal-terminos" style="display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); padding:20px; overflow-y:auto;">
+        <div style="max-width:680px; margin:30px auto; background:var(--surface); border-radius:20px; border:1px solid var(--surface-border); box-shadow:0 25px 60px rgba(0,0,0,0.4); overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb); padding:24px 28px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; color:#fff; font-size:1.2rem;">📋 Términos y Condiciones de Uso</h2>
+                    <p style="margin:4px 0 0; color:rgba(255,255,255,0.7); font-size:0.8rem;">Sistema de Monitoreo Electoral — Campaña Fabián Robles</p>
+                </div>
+                <button onclick="document.getElementById('modal-terminos').style.display='none'" style="background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:50%; width:36px; height:36px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <div style="padding:28px; color:var(--text); font-size:0.88rem; line-height:1.7; max-height:60vh; overflow-y:auto;">
+                <p><strong>Última actualización:</strong> Septiembre 2026</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">1. Aceptación de los Términos</h3>
+                <p>Al acceder y utilizar esta plataforma de monitoreo electoral (en adelante «el Sistema»), usted acepta quedar sujeto a los presentes Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder al Sistema.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">2. Uso Autorizado</h3>
+                <p>El Sistema está destinado exclusivamente al personal autorizado por la Campaña Fabián Robles para el registro, seguimiento y análisis de resultados electorales en tiempo real. Queda estrictamente prohibido:</p>
+                <ul style="padding-left:20px; margin:8px 0;">
+                    <li>Compartir credenciales de acceso con terceros no autorizados.</li>
+                    <li>Ingresar datos falsos, alterados o fraudulentos.</li>
+                    <li>Utilizar el Sistema para fines distintos al monitoreo electoral.</li>
+                    <li>Intentar acceder a áreas restringidas del sistema sin autorización.</li>
+                </ul>
+
+                <h3 style="color:var(--primary); margin-top:20px;">3. Responsabilidad del Usuario</h3>
+                <p>Cada usuario es responsable de la veracidad y exactitud de los datos ingresados. El Sistema registra automáticamente el usuario, la hora y la ubicación GPS de cada acción. Cualquier ingreso de datos incorrectos puede acarrear responsabilidades legales conforme a la legislación electoral ecuatoriana vigente.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">4. Integridad de los Datos</h3>
+                <p>El Sistema implementa mecanismos de detección de inconsistencias numéricas. Los registros con anomalías son marcados automáticamente y pueden ser reportados a las autoridades competentes del CNE.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">5. Confidencialidad</h3>
+                <p>Toda la información contenida en el Sistema es de carácter confidencial y de uso interno. Queda prohibida su divulgación total o parcial a medios de comunicación, partidos políticos contrarios u organismos no autorizados, hasta que el CNE declare oficialmente los resultados.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">6. Propiedad Intelectual</h3>
+                <p>El diseño, código fuente y funcionalidades del Sistema son propiedad exclusiva del equipo de desarrollo de la Campaña Fabián Robles. Queda prohibida su reproducción o distribución sin autorización expresa.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">7. Modificaciones</h3>
+                <p>Nos reservamos el derecho de modificar estos Términos en cualquier momento. Las modificaciones entrarán en vigor inmediatamente después de su publicación en el Sistema.</p>
+
+                <h3 style="color:var(--primary); margin-top:20px;">8. Jurisdicción</h3>
+                <p>Estos Términos se rigen por las leyes de la República del Ecuador. Cualquier disputa será resuelta ante los tribunales competentes de la ciudad de Quito, Ecuador.</p>
+            </div>
+            <div style="padding:20px 28px; border-top:1px solid var(--surface-border); display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="document.getElementById('modal-terminos').style.display='none'; document.getElementById('chk-terminos').checked=true; window._checkLegalBoxes();" style="background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem;">✅ Acepto los Términos</button>
+                <button onclick="document.getElementById('modal-terminos').style.display='none'" style="background:var(--surface-border); color:var(--text); border:none; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.9rem;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Política de Privacidad y Cookies -->
+    <div id="modal-privacidad" style="display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); padding:20px; overflow-y:auto;">
+        <div style="max-width:680px; margin:30px auto; background:var(--surface); border-radius:20px; border:1px solid var(--surface-border); box-shadow:0 25px 60px rgba(0,0,0,0.4); overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#064e3b,#059669); padding:24px 28px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; color:#fff; font-size:1.2rem;">🔒 Política de Privacidad y Cookies</h2>
+                    <p style="margin:4px 0 0; color:rgba(255,255,255,0.7); font-size:0.8rem;">Sistema de Monitoreo Electoral — Campaña Fabián Robles</p>
+                </div>
+                <button onclick="document.getElementById('modal-privacidad').style.display='none'" style="background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:50%; width:36px; height:36px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <div style="padding:28px; color:var(--text); font-size:0.88rem; line-height:1.7; max-height:60vh; overflow-y:auto;">
+                <p><strong>Última actualización:</strong> Septiembre 2026</p>
+
+                <h3 style="color:#059669; margin-top:20px;">1. Responsable del Tratamiento</h3>
+                <p>El responsable del tratamiento de sus datos personales es la <strong>Campaña Electoral Fabián Robles</strong>, con domicilio en la República del Ecuador. Para consultas relacionadas con su privacidad puede contactarnos a través de los canales oficiales de la campaña.</p>
+
+                <h3 style="color:#059669; margin-top:20px;">2. Datos que Recopilamos</h3>
+                <p>Al utilizar el Sistema, recopilamos los siguientes datos:</p>
+                <ul style="padding-left:20px; margin:8px 0;">
+                    <li><strong>Datos de identificación:</strong> nombre de usuario y contraseña (almacenada de forma cifrada).</li>
+                    <li><strong>Datos de ubicación (GPS):</strong> coordenadas geográficas al momento de confirmar asistencia y al enviar resultados, con su consentimiento explícito.</li>
+                    <li><strong>Datos de actividad:</strong> registros de acceso, hora de inicio de sesión, acciones realizadas dentro del Sistema.</li>
+                    <li><strong>Datos electorales:</strong> resultados de mesas receptoras ingresados por el usuario.</li>
+                    <li><strong>Evidencias:</strong> fotografías o documentos PDF del acta electoral subidos al Sistema.</li>
+                </ul>
+
+                <h3 style="color:#059669; margin-top:20px;">3. Finalidad del Tratamiento</h3>
+                <p>Sus datos son utilizados exclusivamente para:</p>
+                <ul style="padding-left:20px; margin:8px 0;">
+                    <li>Autenticar su acceso al Sistema.</li>
+                    <li>Registrar y consolidar los resultados electorales en tiempo real.</li>
+                    <li>Garantizar la trazabilidad y auditoría de los datos ingresados.</li>
+                    <li>Detectar y prevenir fraudes electorales.</li>
+                    <li>Generar reportes estadísticos internos de la campaña.</li>
+                </ul>
+
+                <h3 style="color:#059669; margin-top:20px;">4. Base Legal</h3>
+                <p>El tratamiento de sus datos se realiza con base en su <strong>consentimiento explícito</strong> (otorgado al aceptar esta política) y en el <strong>interés legítimo</strong> de la campaña electoral de monitorear el proceso democrático conforme a la Ley Orgánica Electoral de Ecuador.</p>
+
+                <h3 style="color:#059669; margin-top:20px;">5. Conservación de los Datos</h3>
+                <p>Sus datos serán conservados durante el período electoral y hasta <strong>90 días después</strong> de la proclamación oficial de resultados por parte del CNE, tras lo cual serán eliminados de forma segura, salvo que exista obligación legal de conservarlos por mayor tiempo.</p>
+
+                <h3 style="color:#059669; margin-top:20px;">6. Política de Cookies</h3>
+                <p>El Sistema utiliza las siguientes cookies:</p>
+                <ul style="padding-left:20px; margin:8px 0;">
+                    <li><strong>Cookies de sesión (esenciales):</strong> necesarias para mantener su sesión activa. No pueden desactivarse.</li>
+                    <li><strong>Cookies de preferencias:</strong> almacenan configuraciones como el modo oscuro/claro. Pueden eliminarse desde su navegador.</li>
+                    <li><strong>localStorage:</strong> utilizado para guardar temporalmente actas en modo sin conexión (offline). Estos datos se eliminan automáticamente tras sincronizarse.</li>
+                </ul>
+                <p>No utilizamos cookies de terceros con fines publicitarios ni de seguimiento externo.</p>
+
+                <h3 style="color:#059669; margin-top:20px;">7. Sus Derechos</h3>
+                <p>Conforme a la Ley Orgánica de Protección de Datos Personales del Ecuador (LOPDP), usted tiene derecho a:</p>
+                <ul style="padding-left:20px; margin:8px 0;">
+                    <li><strong>Acceso:</strong> conocer qué datos suyos son tratados.</li>
+                    <li><strong>Rectificación:</strong> corregir datos inexactos.</li>
+                    <li><strong>Eliminación:</strong> solicitar la supresión de sus datos personales.</li>
+                    <li><strong>Oposición:</strong> oponerse al tratamiento en ciertos casos.</li>
+                </ul>
+
+                <h3 style="color:#059669; margin-top:20px;">8. Seguridad</h3>
+                <p>Implementamos medidas técnicas y organizativas para proteger sus datos: cifrado de contraseñas, conexiones HTTPS, control de acceso por roles y auditoría de actividad. Los datos se almacenan en servidores de <strong>Supabase</strong> con infraestructura en la nube con altos estándares de seguridad.</p>
+            </div>
+            <div style="padding:20px 28px; border-top:1px solid var(--surface-border); display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="document.getElementById('modal-privacidad').style.display='none'; document.getElementById('chk-privacidad').checked=true; window._checkLegalBoxes();" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.9rem;">✅ Acepto la Política</button>
+                <button onclick="document.getElementById('modal-privacidad').style.display='none'" style="background:var(--surface-border); color:var(--text); border:none; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.9rem;">Cerrar</button>
             </div>
         </div>
     </div>

@@ -306,6 +306,35 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch(e) {}
     }
 
+    // ================================================
+    // ACEPTACIÓN LEGAL (Términos + Privacidad)
+    // ================================================
+    window._checkLegalBoxes = function() {
+        var chkT = document.getElementById('chk-terminos');
+        var chkP = document.getElementById('chk-privacidad');
+        var btn  = document.getElementById('btn-login');
+        if (!chkT || !chkP || !btn) return;
+        var allChecked = chkT.checked && chkP.checked;
+        btn.disabled = !allChecked;
+        btn.style.opacity    = allChecked ? '1'            : '0.5';
+        btn.style.cursor     = allChecked ? 'pointer'      : 'not-allowed';
+        btn.style.transform  = allChecked ? 'scale(1)'     : 'scale(1)';
+    };
+
+    window._openLegal = function(type) {
+        var modalId = type === 'terminos' ? 'modal-terminos' : 'modal-privacidad';
+        var modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'block';
+    };
+
+    // Cerrar modales legales al hacer clic en el fondo
+    document.addEventListener('click', function(e) {
+        var modalT = document.getElementById('modal-terminos');
+        var modalP = document.getElementById('modal-privacidad');
+        if (e.target === modalT) modalT.style.display = 'none';
+        if (e.target === modalP) modalP.style.display = 'none';
+    });
+
     async function login() {
         var username = document.getElementById('login-email').value.trim();
         var password = document.getElementById('login-password').value;
@@ -364,6 +393,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (panel) panel.classList.remove('active');
         var fab = document.getElementById('chat-fab');
         if (fab) fab.style.display = 'none';
+
+        // Resetear checkboxes legales para nueva sesión
+        var chkT = document.getElementById('chk-terminos');
+        var chkP = document.getElementById('chk-privacidad');
+        var btnLogin = document.getElementById('btn-login');
+        if (chkT) chkT.checked = false;
+        if (chkP) chkP.checked = false;
+        if (btnLogin) { btnLogin.disabled = true; btnLogin.style.opacity = '0.5'; btnLogin.style.cursor = 'not-allowed'; }
 
         navigate('auth');
         showToast('Sesión cerrada');
