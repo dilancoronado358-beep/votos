@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateBaseStats(records) {
-        var totalVotos = records.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+        var totalVotos = records.reduce(function(s, r) { return s + (r.cantidad_votos || 0); }, 0);
         animateNumber('total-votos', totalVotos);
         animateNumber('total-mesas', records.length);
         
@@ -806,6 +806,133 @@ document.addEventListener('DOMContentLoaded', function () {
             pText.textContent = records.length + '/' + TOTAL_JUNTAS + ' (' + progressPercent + '%)';
             pFill.style.width = progressPercent + '%';
         }
+        renderScoreboard(records);
+    }
+
+    // ================================================
+    // MARCADOR POR DIGNIDAD
+    // ================================================
+    var _currentTab = 'alcalde';
+
+    window._switchTab = function(tab) {
+        _currentTab = tab;
+        var panels = ['alcalde','prefecto','cu','cr'];
+        panels.forEach(function(p) {
+            var panel = document.getElementById('panel-' + p);
+            var btn   = document.getElementById('tab-' + p);
+            if (!panel || !btn) return;
+            if (p === tab) {
+                panel.style.display = 'block';
+                btn.style.color = 'var(--primary)';
+                btn.style.fontWeight = '700';
+                btn.style.borderBottom = '3px solid var(--primary)';
+                btn.style.marginBottom = '-2px';
+            } else {
+                panel.style.display = 'none';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.fontWeight = '600';
+                btn.style.borderBottom = 'none';
+                btn.style.marginBottom = '0';
+            }
+        });
+        // Update table headers too
+        renderTableHeaders(tab);
+        renderDashboardTable();
+    };
+
+    function renderTableHeaders(tab) {
+        var thead = document.getElementById('base-table-head');
+        if (!thead) return;
+        var configs = {
+            alcalde: [
+                { label: 'Fabián (L17-18)', color: '#3b82f6' },
+                { label: 'L1 Lucero' }, { label: 'L4 Ponce' }, { label: 'L7 Jácome' },
+                { label: 'L63 Castillo' }, { label: 'L105 Proaño' },
+                { label: '⚪ Blancos' }, { label: '❌ Nulos' }
+            ],
+            prefecto: [
+                { label: 'L4 Romo' }, { label: 'L7 Poso' }, { label: 'L63 J. Robles' },
+                { label: '⚪ Blancos' }, { label: '❌ Nulos' }
+            ],
+            cu: [
+                { label: 'L1' }, { label: 'L4' }, { label: 'L7' },
+                { label: 'L17-18', color: '#3b82f6' }, { label: 'L63' }, { label: 'L105' },
+                { label: '⚪ Blancos' }, { label: '❌ Nulos' }
+            ],
+            cr: [
+                { label: 'L1' }, { label: 'L4' }, { label: 'L7' },
+                { label: 'L17-18', color: '#3b82f6' }, { label: 'L63' }, { label: 'L105' },
+                { label: '⚪ Blancos' }, { label: '❌ Nulos' }
+            ]
+        };
+        var cols = configs[tab] || configs.alcalde;
+        var colspan = cols.length + 4; // mesa + hora + gps + acta
+        thead.innerHTML = '<th>Mesa / Establ.</th>' +
+            cols.map(function(c) {
+                return '<th' + (c.color ? ' style="color:' + c.color + '; font-weight:900;"' : '') + '>' + c.label + '</th>';
+            }).join('') +
+            '<th>Hora</th><th>GPS</th><th>Acta</th>';
+    }
+
+    function renderScoreboard(records) {
+        var alcalde = [
+            { label: 'Fabián Robles', sub: 'Lista 17-18', color: '#3b82f6', key: 'cantidad_votos', highlight: true },
+            { label: 'Raúl Lucero',    sub: 'Lista 1',     color: '#ef4444', key: 'alc_l1' },
+            { label: 'Andrés Ponce',   sub: 'Lista 4',     color: '#f59e0b', key: 'alc_l4' },
+            { label: 'Gabriel Jácome', sub: 'Lista 7',     color: '#10b981', key: 'alc_l7' },
+            { label: 'Rubén Castillo', sub: 'Lista 63',    color: '#8b5cf6', key: 'alc_l63' },
+            { label: 'Javier Proaño', sub: 'Lista 105',   color: '#ec4899', key: 'alc_l105' },
+        ];
+        var prefecto = [
+            { label: 'Edison Romo',  sub: 'Lista 4',  color: '#f59e0b', key: 'pref_l4' },
+            { label: 'Lucia Poso',   sub: 'Lista 7',  color: '#10b981', key: 'pref_l7' },
+            { label: 'Julio Robles', sub: 'Lista 63', color: '#8b5cf6', key: 'pref_l63' },
+        ];
+        var concUrb = [
+            { label: 'Lista 1',     color: '#ef4444', key: 'cu_l1' },
+            { label: 'Lista 4',     color: '#f59e0b', key: 'cu_l4' },
+            { label: 'Lista 7',     color: '#10b981', key: 'cu_l7' },
+            { label: 'Lista 17-18', color: '#3b82f6', key: 'cu_l1718', highlight: true },
+            { label: 'Lista 63',    color: '#8b5cf6', key: 'cu_l63' },
+            { label: 'Lista 105',   color: '#ec4899', key: 'cu_l105' },
+        ];
+        var concRur = [
+            { label: 'Lista 1',     color: '#ef4444', key: 'cr_l1' },
+            { label: 'Lista 4',     color: '#f59e0b', key: 'cr_l4' },
+            { label: 'Lista 7',     color: '#10b981', key: 'cr_l7' },
+            { label: 'Lista 17-18', color: '#3b82f6', key: 'cr_l1718', highlight: true },
+            { label: 'Lista 63',    color: '#8b5cf6', key: 'cr_l63' },
+            { label: 'Lista 105',   color: '#ec4899', key: 'cr_l105' },
+        ];
+
+        function buildBar(containerId, candidates) {
+            var el = document.getElementById(containerId);
+            if (!el) return;
+            var totals = candidates.map(function(c) {
+                return records.reduce(function(s, r) { return s + (r[c.key] || 0); }, 0);
+            });
+            var max = Math.max.apply(null, totals) || 1;
+            el.innerHTML = '';
+            candidates.forEach(function(c, i) {
+                var pct = Math.round((totals[i] / max) * 100);
+                var border = c.highlight ? '2px solid ' + c.color : '1px solid var(--surface-border)';
+                el.innerHTML += `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; border:${border}; background:${c.highlight ? 'rgba(59,130,246,0.06)' : 'transparent'}">
+                    <div style="width:110px; font-size:0.8rem; font-weight:${c.highlight ? '800' : '600'}; color:${c.highlight ? c.color : 'var(--text)'}; flex-shrink:0;">
+                        ${c.label}${c.sub ? '<br><span style="font-size:0.65rem; color:var(--text-muted); font-weight:400;">' + c.sub + '</span>' : ''}
+                    </div>
+                    <div style="flex:1; background:var(--surface-border); border-radius:6px; height:12px; overflow:hidden;">
+                        <div style="height:100%; width:${pct}%; background:${c.color}; border-radius:6px; transition:width 0.8s cubic-bezier(.4,0,.2,1);"></div>
+                    </div>
+                    <div style="width:55px; text-align:right; font-size:0.9rem; font-weight:800; color:${c.color}; flex-shrink:0;">${totals[i].toLocaleString()}</div>
+                </div>`;
+            });
+        }
+
+        buildBar('scores-alcalde', alcalde);
+        buildBar('scores-prefecto', prefecto);
+        buildBar('scores-cu', concUrb);
+        buildBar('scores-cr', concRur);
     }
 
     function renderDashboardTable() {
@@ -814,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = '';
         
         if (baseFiltered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">No hay registros encontrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">No hay registros encontrados.</td></tr>';
             updatePagination('votos', 1, 1);
             return;
         }
@@ -827,34 +954,69 @@ document.addEventListener('DOMContentLoaded', function () {
         var end = start + PAGE_SIZE;
         var pageData = baseFiltered.slice(start, end);
 
+        var tab = _currentTab || 'alcalde';
+
         pageData.forEach(function(rec, idx) {
             var t = new Date(rec.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            var obsText = rec.observaciones ? '<span style="color:var(--danger); font-size:0.8rem;" title="' + rec.observaciones + '">⚠️ ' + rec.observaciones + '</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
             var genText = rec.genero === 'Masculino' ? ' (M)' : (rec.genero === 'Femenino' ? ' (F)' : '');
-            
-            var totalCalculado = rec.cantidad_votos + (rec.votos_blancos || 0) + (rec.votos_nulos || 0);
-            var isFraud = false;
-            if (rec.total_sufragantes && rec.total_sufragantes > 0) {
-                if (totalCalculado !== rec.total_sufragantes) isFraud = true;
-                if ((rec.votos_nulos || 0) > (rec.total_sufragantes * 0.15)) isFraud = true;
-            }
-            
-            var fraudBadge = isFraud ? '<span style="background:var(--danger); color:white; padding:2px 6px; border-radius:4px; font-size:0.6rem; font-weight:bold; margin-left:5px;">⚠️ SOSPECHA</span>' : '';
-            var btnImpugnar = isFraud ? '<button class="btn-delete" style="background:#b91c1c; margin-top:5px; font-size:0.7rem; padding:4px 8px; width:100%;" onclick="window._generateImpugnacion(\'' + btoa(encodeURIComponent(JSON.stringify(rec))) + '\')">📄 Oficio PDF</button>' : '';
 
-            var mapLink = (rec.latitud && rec.longitud) 
-                ? '<a href="https://www.google.com/maps/search/?api=1&query=' + rec.latitud + ',' + rec.longitud + '" target="_blank" style="color:var(--primary); text-decoration:none; font-size:1.2rem;" title="Ver en Mapa">📍</a>'
+            var mapLink = (rec.latitud && rec.longitud)
+                ? '<a href="https://www.google.com/maps/search/?api=1&query=' + rec.latitud + ',' + rec.longitud + '" target="_blank" style="color:var(--primary); font-size:1.2rem;" title="Ver en Mapa">📍</a>'
                 : '<span style="color:var(--text-muted); font-size:0.8rem;">—</span>';
+
+            var actaBtn = '<button class="btn-view-doc" style="width:100%;" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button>';
+
+            var mesaCell = '<td><strong>Mesa ' + rec.junta_numero + genText + '</strong><br><span style="color:var(--text-muted);font-size:0.75rem;">' + (rec.establecimiento || '—') + '</span></td>';
+            var timeCell = '<td style="color:var(--text-muted);font-size:0.85rem;">' + t + '</td>';
+
+            var dataCells = '';
+
+            if (tab === 'alcalde') {
+                var isFabian = true; // highlight main candidate column
+                dataCells =
+                    '<td style="color:#3b82f6; font-weight:900; font-size:1rem;">' + (rec.cantidad_votos || 0) + '</td>' +
+                    '<td>' + (rec.alc_l1 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l4 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l7 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l63 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.votos_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.votos_nulos || 0) + '</td>';
+            } else if (tab === 'prefecto') {
+                dataCells =
+                    '<td>' + (rec.pref_l4 || 0) + '</td>' +
+                    '<td>' + (rec.pref_l7 || 0) + '</td>' +
+                    '<td>' + (rec.pref_l63 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.pref_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.pref_nulos || 0) + '</td>';
+            } else if (tab === 'cu') {
+                dataCells =
+                    '<td>' + (rec.cu_l1 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l4 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l7 || 0) + '</td>' +
+                    '<td style="color:#3b82f6; font-weight:800;">' + (rec.cu_l1718 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l63 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.cu_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.cu_nulos || 0) + '</td>';
+            } else if (tab === 'cr') {
+                dataCells =
+                    '<td>' + (rec.cr_l1 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l4 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l7 || 0) + '</td>' +
+                    '<td style="color:#3b82f6; font-weight:800;">' + (rec.cr_l1718 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l63 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.cr_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.cr_nulos || 0) + '</td>';
+            }
 
             var tr = document.createElement('tr');
             tr.className = 'animate-row';
             tr.style.animationDelay = (idx * 50) + 'ms';
-            tr.innerHTML = '<td><strong>Mesa ' + rec.junta_numero + genText + '</strong>' + fraudBadge + '<br><span style="color:var(--text-muted);font-size:0.8rem;">' + (rec.establecimiento || '—') + '</span></td>' +
-                '<td style="color:var(--success);font-weight:bold;">' + rec.cantidad_votos + '</td>' +
-                '<td style="color:var(--text-muted);font-size:0.85rem;">' + t + '</td>' +
-                '<td>' + obsText + '</td>' +
+            tr.innerHTML = mesaCell + dataCells + timeCell +
                 '<td style="text-align:center;">' + mapLink + '</td>' +
-                '<td><button class="btn-view-doc" style="width:100%; margin-bottom:5px;" onclick="window._openModal(\'' + rec.evidencia_url + '\')">Ver Acta</button>' + btnImpugnar + '</td>';
+                '<td>' + actaBtn + '</td>';
             tbody.appendChild(tr);
         });
 

@@ -539,9 +539,38 @@
                 <div class="ticker-move" id="base-ticker-content">Esperando datos en vivo...</div>
             </div>
 
+            <!-- MARCADOR COMPLETO POR DIGNIDAD -->
+            <!-- Tabs de Dignidad -->
+            <div class="glass-panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                <div style="display:flex; border-bottom:2px solid var(--surface-border); overflow-x:auto;">
+                    <button class="dignidad-tab active" id="tab-alcalde" onclick="window._switchTab('alcalde')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:700; color:var(--primary); font-size:0.85rem; cursor:pointer; white-space:nowrap; border-bottom:3px solid var(--primary); margin-bottom:-2px;">🏛️ Alcalde</button>
+                    <button class="dignidad-tab" id="tab-prefecto" onclick="window._switchTab('prefecto')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">👑 Prefecto</button>
+                    <button class="dignidad-tab" id="tab-cu" onclick="window._switchTab('cu')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">🏙️ Conc. Urb.</button>
+                    <button class="dignidad-tab" id="tab-cr" onclick="window._switchTab('cr')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">🌾 Conc. Rur.</button>
+                </div>
+
+                <!-- ALCALDE -->
+                <div id="panel-alcalde" class="dignidad-panel" style="padding:16px;">
+                    <div id="scores-alcalde" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+                <!-- PREFECTO -->
+                <div id="panel-prefecto" class="dignidad-panel" style="padding:16px; display:none;">
+                    <div id="scores-prefecto" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+                <!-- CONCEJALES URBANOS -->
+                <div id="panel-cu" class="dignidad-panel" style="padding:16px; display:none;">
+                    <div id="scores-cu" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+                <!-- CONCEJALES RURALES -->
+                <div id="panel-cr" class="dignidad-panel" style="padding:16px; display:none;">
+                    <div id="scores-cr" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+            </div>
+
+            <!-- Stats compactos (mesas + progreso) -->
             <div class="dashboard-stats glass-panel">
                 <div class="stat-box">
-                    <h3>Total Votos Registrados</h3>
+                    <h3>Total Votos (Alcalde)</h3>
                     <div class="stat-number" id="total-votos">0</div>
                 </div>
                 <div class="stat-box">
@@ -576,21 +605,26 @@
                     placeholder="🔍 Buscar por mesa o establecimiento...">
 
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table class="data-table" id="base-results-table">
                         <thead>
-                            <tr>
+                            <tr id="base-table-head">
                                 <th>Mesa / Establ.</th>
-                                <th>Votos</th>
+                                <th style="color:#3b82f6;">Fabián (L17-18)</th>
+                                <th>L1 Lucero</th>
+                                <th>L4 Ponce</th>
+                                <th>L7 Jácome</th>
+                                <th>L63 Castillo</th>
+                                <th>L105 Proaño</th>
+                                <th>⚪ Blancos</th>
+                                <th>❌ Nulos</th>
                                 <th>Hora</th>
-                                <th>Obs.</th>
                                 <th>GPS</th>
-                                <th>Evidencia</th>
+                                <th>Acta</th>
                             </tr>
                         </thead>
                         <tbody id="registros-tbody">
                             <tr>
-                                <td colspan="6" style="text-align:center; color:var(--text-muted);">Cargando datos...
-                                </td>
+                                <td colspan="12" style="text-align:center; color:var(--text-muted);">Cargando datos...</td>
                             </tr>
                         </tbody>
                     </table>
