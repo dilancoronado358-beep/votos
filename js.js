@@ -309,6 +309,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================================================
     // ACEPTACIÓN LEGAL (Términos + Privacidad)
     // ================================================
+
+    // Forzar reset al cargar (el navegador puede recordar el estado)
+    (function() {
+        var chkT = document.getElementById('chk-terminos');
+        var chkP = document.getElementById('chk-privacidad');
+        var btn  = document.getElementById('btn-login');
+        if (chkT) chkT.checked = false;
+        if (chkP) chkP.checked = false;
+        if (btn)  { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
+    })();
+
     window._checkLegalBoxes = function() {
         var chkT = document.getElementById('chk-terminos');
         var chkP = document.getElementById('chk-privacidad');

@@ -60,18 +60,19 @@
                     </div>
 
                     <!-- ACEPTACIÓN LEGAL -->
-                    <div style="background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:14px; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
-                        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.82rem; color:var(--text-muted); line-height:1.4;">
-                            <input type="checkbox" id="chk-terminos" style="margin-top:2px; accent-color:var(--primary); width:16px; height:16px; flex-shrink:0;" onchange="window._checkLegalBoxes()">
-                            <span>He leído y acepto los
-                                <a href="#" onclick="window._openLegal('terminos'); return false;" style="color:var(--primary); font-weight:600; text-decoration:underline;">Términos y Condiciones</a>
+                    <div style="background:rgba(59,130,246,0.1); border:2px solid rgba(59,130,246,0.35); border-radius:14px; padding:16px; margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
+                        <div style="font-size:0.7rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">🛡️ Requerido para acceder</div>
+                        <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; line-height:1.5; user-select:none;">
+                            <input type="checkbox" id="chk-terminos" autocomplete="off" style="margin-top:3px; accent-color:var(--primary); width:18px; height:18px; flex-shrink:0; cursor:pointer;" onchange="window._checkLegalBoxes()">
+                            <span style="font-size:0.84rem; color:var(--text); font-weight:500;">He leído y acepto los
+                                <a href="#" onclick="window._openLegal('terminos'); return false;" style="color:var(--primary); font-weight:700; text-decoration:underline; text-underline-offset:2px;">Términos y Condiciones</a>
                                 de uso de esta plataforma.
                             </span>
                         </label>
-                        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:0.82rem; color:var(--text-muted); line-height:1.4;">
-                            <input type="checkbox" id="chk-privacidad" style="margin-top:2px; accent-color:var(--primary); width:16px; height:16px; flex-shrink:0;" onchange="window._checkLegalBoxes()">
-                            <span>He leído y acepto la
-                                <a href="#" onclick="window._openLegal('privacidad'); return false;" style="color:var(--primary); font-weight:600; text-decoration:underline;">Política de Privacidad y Cookies</a>.
+                        <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; line-height:1.5; user-select:none;">
+                            <input type="checkbox" id="chk-privacidad" autocomplete="off" style="margin-top:3px; accent-color:var(--primary); width:18px; height:18px; flex-shrink:0; cursor:pointer;" onchange="window._checkLegalBoxes()">
+                            <span style="font-size:0.84rem; color:var(--text); font-weight:500;">He leído y acepto la
+                                <a href="#" onclick="window._openLegal('privacidad'); return false;" style="color:var(--primary); font-weight:700; text-decoration:underline; text-underline-offset:2px;">Política de Privacidad y Cookies</a>.
                             </span>
                         </label>
                     </div>
