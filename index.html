@@ -130,7 +130,7 @@
                     <div class="stat-card-icon">🗳️</div>
                     <div class="stat-card-info">
                         <div class="stat-card-number" id="admin-total-votos">—</div>
-                        <div class="stat-card-label">Total Votos</div>
+                        <div class="stat-card-label">Votos Fabián</div>
                     </div>
                 </div>
                 <div class="admin-stat-card accent-green">
@@ -147,10 +147,31 @@
                         <div class="stat-card-label">Usuarios</div>
                     </div>
                 </div>
+                <div class="admin-stat-card" style="border-left:4px solid #6b7280;">
+                    <div class="stat-card-icon">⚪</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-total-blancos">—</div>
+                        <div class="stat-card-label">Votos Blancos (Alc.)</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card" style="border-left:4px solid #ef4444;">
+                    <div class="stat-card-icon">❌</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-total-nulos">—</div>
+                        <div class="stat-card-label">Votos Nulos (Alc.)</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card" style="border-left:4px solid #f59e0b;">
+                    <div class="stat-card-icon">🕒</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-number" id="admin-pendientes">—</div>
+                        <div class="stat-card-label">Mesas Pendientes</div>
+                    </div>
+                </div>
                 <!-- Botón Limpiar Datos -->
-                <button class="btn btn-secondary btn-small btn-block mt-3" style="grid-column: 1 / -1;"
+                <button class="btn btn-secondary btn-small btn-block mt-3" style="grid-column: 1 / -1; background:#7f1d1d; color:#fca5a5; border-color:#ef4444;"
                     onclick="window._clearData()">
-                    Limpiar Datos (Test)
+                    🗑️ Limpiar Datos (Test)
                 </button>
             </div>
 
@@ -164,6 +185,20 @@
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" id="admin-progress-fill" style="width: 0%;"></div>
                 </div>
+            </div>
+
+            <!-- MARCADOR CANDIDATOS ADMIN -->
+            <div class="glass-panel" style="padding:0; overflow:hidden; margin-bottom:20px;">
+                <div style="display:flex; border-bottom:2px solid var(--surface-border); overflow-x:auto;">
+                    <button id="adm-tab-alcalde" onclick="window._admSwitchTab('alcalde')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:700; color:var(--primary); font-size:0.85rem; cursor:pointer; white-space:nowrap; border-bottom:3px solid var(--primary); margin-bottom:-2px;">🏛️ Alcalde</button>
+                    <button id="adm-tab-prefecto" onclick="window._admSwitchTab('prefecto')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">👑 Prefecto</button>
+                    <button id="adm-tab-cu" onclick="window._admSwitchTab('cu')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">🏙️ Conc. Urb.</button>
+                    <button id="adm-tab-cr" onclick="window._admSwitchTab('cr')" style="flex:1; padding:12px 8px; border:none; background:transparent; font-weight:600; color:var(--text-muted); font-size:0.85rem; cursor:pointer; white-space:nowrap;">🌾 Conc. Rur.</button>
+                </div>
+                <div id="adm-panel-alcalde" style="padding:16px;"><div id="adm-scores-alcalde" style="display:flex; flex-direction:column; gap:8px;"></div></div>
+                <div id="adm-panel-prefecto" style="padding:16px; display:none;"><div id="adm-scores-prefecto" style="display:flex; flex-direction:column; gap:8px;"></div></div>
+                <div id="adm-panel-cu" style="padding:16px; display:none;"><div id="adm-scores-cu" style="display:flex; flex-direction:column; gap:8px;"></div></div>
+                <div id="adm-panel-cr" style="padding:16px; display:none;"><div id="adm-scores-cr" style="display:flex; flex-direction:column; gap:8px;"></div></div>
             </div>
 
             <!-- Admin Middle Grid (Chart + Ranking) -->
@@ -213,7 +248,46 @@
                 </div>
             </div>
 
-            <!-- Bottom: Create user + User list -->
+            <!-- TABLA COMPLETA DE VOTOS (Admin) -->
+            <div class="glass-panel mt-4" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                    <h3 class="section-title" style="margin:0;">📊 Todos los Registros de Mesas</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-refresh" onclick="window._exportarExcelAvanzado()">📊 Excel</button>
+                        <button class="btn-refresh" onclick="window._exportPDF()">📄 PDF</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; margin-bottom:12px; overflow-x:auto;">
+                    <button id="adm-ttab-alcalde" onclick="window._admTableTab('alcalde')" style="padding:6px 14px; border-radius:8px; border:2px solid var(--primary); background:var(--primary); color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer; white-space:nowrap;">🏛️ Alcalde</button>
+                    <button id="adm-ttab-prefecto" onclick="window._admTableTab('prefecto')" style="padding:6px 14px; border-radius:8px; border:2px solid var(--surface-border); background:transparent; color:var(--text-muted); font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">👑 Prefecto</button>
+                    <button id="adm-ttab-cu" onclick="window._admTableTab('cu')" style="padding:6px 14px; border-radius:8px; border:2px solid var(--surface-border); background:transparent; color:var(--text-muted); font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">🏙️ C. Urb.</button>
+                    <button id="adm-ttab-cr" onclick="window._admTableTab('cr')" style="padding:6px 14px; border-radius:8px; border:2px solid var(--surface-border); background:transparent; color:var(--text-muted); font-size:0.8rem; font-weight:600; cursor:pointer; white-space:nowrap;">🌾 C. Rur.</button>
+                </div>
+                <input type="text" id="admin-search-votos" class="search-input" placeholder="🔍 Buscar por mesa, recinto o usuario...">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr id="admin-table-head">
+                                <th>Mesa / Establ.</th>
+                                <th style="color:#3b82f6; font-weight:900;">Fabián (L17-18)</th>
+                                <th>L1 Lucero</th><th>L4 Ponce</th><th>L7 Jácome</th><th>L63 Cast.</th><th>L105 Proaño</th>
+                                <th>⚪ Bl.</th><th>❌ Nul.</th>
+                                <th>Padrón</th><th>Hora</th><th>GPS</th><th>Acta</th><th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-votos-tbody">
+                            <tr><td colspan="14" style="text-align:center; color:var(--text-muted);">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls" id="admin-votos-pagination">
+                    <button id="admin-votos-prev" class="btn-page" disabled>Anterior</button>
+                    <span id="admin-votos-page-info">Página 1 de 1</span>
+                    <button id="admin-votos-next" class="btn-page" disabled>Siguiente</button>
+                </div>
+            </div>
+
+
             <div class="admin-bottom-grid">
                 <!-- Create user form -->
                 <div class="glass-panel">

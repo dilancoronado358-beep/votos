@@ -1086,10 +1086,12 @@ document.addEventListener('DOMContentLoaded', function () {
         pPrev.onclick = function() {
             if (prefix === 'votos') { basePage--; renderDashboardTable(); }
             if (prefix === 'users') { usersPage--; renderUsersTable(); }
+            if (prefix === 'admin-votos') { adminVotosPage--; renderAdminDashboardTable(); }
         };
         pNext.onclick = function() {
             if (prefix === 'votos') { basePage++; renderDashboardTable(); }
             if (prefix === 'users') { usersPage++; renderUsersTable(); }
+            if (prefix === 'admin-votos') { adminVotosPage++; renderAdminDashboardTable(); }
         };
     }
 
@@ -1317,6 +1319,268 @@ document.addEventListener('DOMContentLoaded', function () {
     var distChart = null;
     var globalAdminFilter = null; // para filtrar por recinto
 
+    var adminVotosData = [];
+    var adminVotosFiltered = [];
+    var adminVotosPage = 1;
+
+    // Tabs Scoreboard Admin
+    var _admCurrentTab = 'alcalde';
+    window._admSwitchTab = function(tab) {
+        _admCurrentTab = tab;
+        ['alcalde','prefecto','cu','cr'].forEach(function(p) {
+            var panel = document.getElementById('adm-panel-' + p);
+            var btn   = document.getElementById('adm-tab-' + p);
+            if (!panel || !btn) return;
+            if (p === tab) {
+                panel.style.display = 'block';
+                btn.style.color = 'var(--primary)';
+                btn.style.fontWeight = '700';
+                btn.style.borderBottom = '3px solid var(--primary)';
+                btn.style.marginBottom = '-2px';
+            } else {
+                panel.style.display = 'none';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.fontWeight = '600';
+                btn.style.borderBottom = 'none';
+                btn.style.marginBottom = '0';
+            }
+        });
+    };
+
+    // Tabs Tabla Admin
+    var _admTableCurrentTab = 'alcalde';
+    window._admTableTab = function(tab) {
+        _admTableCurrentTab = tab;
+        ['alcalde','prefecto','cu','cr'].forEach(function(p) {
+            var btn = document.getElementById('adm-ttab-' + p);
+            if (!btn) return;
+            if (p === tab) {
+                btn.style.background = 'var(--primary)';
+                btn.style.color = '#fff';
+                btn.style.borderColor = 'var(--primary)';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderColor = 'var(--surface-border)';
+            }
+        });
+        renderAdminTableHeaders(tab);
+        renderAdminDashboardTable();
+    };
+
+    function renderAdminTableHeaders(tab) {
+        var thead = document.getElementById('admin-table-head');
+        if (!thead) return;
+        var configs = {
+            alcalde: [
+                { label: 'Fabián (L17-18)', color: '#3b82f6' },
+                { label: 'L1 Lucero' }, { label: 'L4 Ponce' }, { label: 'L7 Jácome' },
+                { label: 'L63 Cast.' }, { label: 'L105 Proaño' },
+                { label: '⚪ Bl.' }, { label: '❌ Nul.' }
+            ],
+            prefecto: [
+                { label: 'L4 Romo' }, { label: 'L7 Poso' }, { label: 'L63 Robles' },
+                { label: '⚪ Bl.' }, { label: '❌ Nul.' }
+            ],
+            cu: [
+                { label: 'L1' }, { label: 'L4' }, { label: 'L7' }, { label: 'L17-18', color: '#3b82f6' },
+                { label: 'L63' }, { label: 'L105' }, { label: '⚪ Bl.' }, { label: '❌ Nul.' }
+            ],
+            cr: [
+                { label: 'L1' }, { label: 'L4' }, { label: 'L7' }, { label: 'L17-18', color: '#3b82f6' },
+                { label: 'L63' }, { label: 'L105' }, { label: '⚪ Bl.' }, { label: '❌ Nul.' }
+            ]
+        };
+        var c = configs[tab] || configs.alcalde;
+        var html = '<th>Mesa / Establ.</th>';
+        c.forEach(function(col) {
+            var st = col.color ? ' style="color:'+col.color+'; font-weight:900;"' : '';
+            html += '<th'+st+'>' + col.label + '</th>';
+        });
+        html += '<th>Padrón</th><th>Hora</th><th>GPS</th><th>Acta</th><th>Usuario</th>';
+        thead.innerHTML = html;
+    }
+
+    function renderAdminScoreboard(records) {
+        var createBars = function(containerId, barsData, maxVal) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var html = '';
+            barsData.forEach(function(b) {
+                var pct = maxVal > 0 ? (b.val / maxVal) * 100 : 0;
+                var color = b.color || '#3b82f6';
+                html += '<div style="margin-bottom:6px;">' +
+                    '<div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; margin-bottom:2px; color:var(--text);">' +
+                        '<span>' + b.label + '</span><span>' + b.val.toLocaleString() + '</span>' +
+                    '</div>' +
+                    '<div style="height:6px; background:var(--surface-border); border-radius:3px; overflow:hidden;">' +
+                        '<div style="height:100%; width:' + pct + '%; background:' + color + '; border-radius:3px;"></div>' +
+                    '</div>' +
+                '</div>';
+            });
+            container.innerHTML = html;
+        };
+
+        var alc_f = records.reduce(function(s,r){return s+(r.cantidad_votos||0);},0);
+        var alc_1 = records.reduce(function(s,r){return s+(r.alc_l1||0);},0);
+        var alc_4 = records.reduce(function(s,r){return s+(r.alc_l4||0);},0);
+        var alc_7 = records.reduce(function(s,r){return s+(r.alc_l7||0);},0);
+        var alc_63 = records.reduce(function(s,r){return s+(r.alc_l63||0);},0);
+        var alc_105 = records.reduce(function(s,r){return s+(r.alc_l105||0);},0);
+        var maxAlc = Math.max(alc_f, alc_1, alc_4, alc_7, alc_63, alc_105) || 1;
+
+        createBars('adm-scores-alcalde', [
+            { label:'Fabián (17-18)', val:alc_f, color:'#3b82f6' },
+            { label:'Lucero (1)', val:alc_1, color:'#dc2626' },
+            { label:'Ponce (4)', val:alc_4, color:'#d97706' },
+            { label:'Jácome (7)', val:alc_7, color:'#059669' },
+            { label:'Castillo (63)', val:alc_63, color:'#7c3aed' },
+            { label:'Proaño (105)', val:alc_105, color:'#db2777' }
+        ], maxAlc);
+
+        var pref_4 = records.reduce(function(s,r){return s+(r.pref_l4||0);},0);
+        var pref_7 = records.reduce(function(s,r){return s+(r.pref_l7||0);},0);
+        var pref_63 = records.reduce(function(s,r){return s+(r.pref_l63||0);},0);
+        var maxPref = Math.max(pref_4, pref_7, pref_63) || 1;
+        createBars('adm-scores-prefecto', [
+            { label:'Romo (4)', val:pref_4, color:'#d97706' },
+            { label:'Poso (7)', val:pref_7, color:'#059669' },
+            { label:'Robles (63)', val:pref_63, color:'#7c3aed' }
+        ], maxPref);
+
+        var cu_1 = records.reduce(function(s,r){return s+(r.cu_l1||0);},0);
+        var cu_4 = records.reduce(function(s,r){return s+(r.cu_l4||0);},0);
+        var cu_7 = records.reduce(function(s,r){return s+(r.cu_l7||0);},0);
+        var cu_17 = records.reduce(function(s,r){return s+(r.cu_l1718||0);},0);
+        var cu_63 = records.reduce(function(s,r){return s+(r.cu_l63||0);},0);
+        var cu_105 = records.reduce(function(s,r){return s+(r.cu_l105||0);},0);
+        var maxCu = Math.max(cu_1, cu_4, cu_7, cu_17, cu_63, cu_105) || 1;
+        createBars('adm-scores-cu', [
+            { label:'Lista 1', val:cu_1, color:'#dc2626' },
+            { label:'Lista 4', val:cu_4, color:'#d97706' },
+            { label:'Lista 7', val:cu_7, color:'#059669' },
+            { label:'Lista 17-18', val:cu_17, color:'#3b82f6' },
+            { label:'Lista 63', val:cu_63, color:'#7c3aed' },
+            { label:'Lista 105', val:cu_105, color:'#db2777' }
+        ], maxCu);
+
+        var cr_1 = records.reduce(function(s,r){return s+(r.cr_l1||0);},0);
+        var cr_4 = records.reduce(function(s,r){return s+(r.cr_l4||0);},0);
+        var cr_7 = records.reduce(function(s,r){return s+(r.cr_l7||0);},0);
+        var cr_17 = records.reduce(function(s,r){return s+(r.cr_l1718||0);},0);
+        var cr_63 = records.reduce(function(s,r){return s+(r.cr_l63||0);},0);
+        var cr_105 = records.reduce(function(s,r){return s+(r.cr_l105||0);},0);
+        var maxCr = Math.max(cr_1, cr_4, cr_7, cr_17, cr_63, cr_105) || 1;
+        createBars('adm-scores-cr', [
+            { label:'Lista 1', val:cr_1, color:'#dc2626' },
+            { label:'Lista 4', val:cr_4, color:'#d97706' },
+            { label:'Lista 7', val:cr_7, color:'#059669' },
+            { label:'Lista 17-18', val:cr_17, color:'#3b82f6' },
+            { label:'Lista 63', val:cr_63, color:'#7c3aed' },
+            { label:'Lista 105', val:cr_105, color:'#db2777' }
+        ], maxCr);
+    }
+
+    function renderAdminDashboardTable() {
+        var tbody = document.getElementById('admin-votos-tbody');
+        if (!tbody) return;
+        if (adminVotosFiltered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; color:var(--text-muted); padding:30px;">No hay datos para mostrar</td></tr>';
+            return;
+        }
+
+        var totalPages = Math.ceil(adminVotosFiltered.length / PAGE_SIZE);
+        if (adminVotosPage > totalPages) adminVotosPage = totalPages;
+        if (adminVotosPage < 1) adminVotosPage = 1;
+
+        var start = (adminVotosPage - 1) * PAGE_SIZE;
+        var pageData = adminVotosFiltered.slice(start, start + PAGE_SIZE);
+
+        tbody.innerHTML = '';
+        var tab = _admTableCurrentTab;
+
+        pageData.forEach(function(rec, idx) {
+            var d = new Date(rec.created_at);
+            var timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            var gen = rec.genero === 'Masculino' ? '♂️' : (rec.genero === 'Femenino' ? '♀️' : '');
+            var est = rec.establecimiento ? '<br><span style="font-size:0.75rem; color:var(--text-muted);">' + rec.establecimiento + '</span>' : '';
+            var userStr = rec.usuarios && rec.usuarios.username ? rec.usuarios.username : '—';
+            
+            var mesaCell = '<td><div style="font-weight:700;">Mesa ' + rec.junta_numero + ' ' + gen + '</div>' + est + '</td>';
+            var timeCell = '<td>' + (rec.total_sufragantes || 0) + '</td><td>' + timeStr + '</td>';
+            var mapLink = rec.latitud && rec.longitud ? '<a href="https://www.google.com/maps?q=' + rec.latitud + ',' + rec.longitud + '" target="_blank" style="text-decoration:none;" title="Ver en Mapa">📍</a>' : '—';
+            var actaBtn = rec.evidencia_url ? '<button class="btn btn-secondary btn-small" onclick="window._openModal(\'' + rec.evidencia_url + '\')" style="padding:4px 8px; font-size:0.75rem;">Ver</button>' : '—';
+
+            var dataCells = '';
+            if (tab === 'alcalde') {
+                dataCells =
+                    '<td style="color:#3b82f6; font-weight:800;">' + (rec.cantidad_votos || 0) + '</td>' +
+                    '<td>' + (rec.alc_l1 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l4 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l7 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l63 || 0) + '</td>' +
+                    '<td>' + (rec.alc_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.votos_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.votos_nulos || 0) + '</td>';
+            } else if (tab === 'prefecto') {
+                dataCells =
+                    '<td>' + (rec.pref_l4 || 0) + '</td>' +
+                    '<td>' + (rec.pref_l7 || 0) + '</td>' +
+                    '<td>' + (rec.pref_l63 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.pref_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.pref_nulos || 0) + '</td>';
+            } else if (tab === 'cu') {
+                dataCells =
+                    '<td>' + (rec.cu_l1 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l4 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l7 || 0) + '</td>' +
+                    '<td style="color:#3b82f6; font-weight:800;">' + (rec.cu_l1718 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l63 || 0) + '</td>' +
+                    '<td>' + (rec.cu_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.cu_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.cu_nulos || 0) + '</td>';
+            } else if (tab === 'cr') {
+                dataCells =
+                    '<td>' + (rec.cr_l1 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l4 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l7 || 0) + '</td>' +
+                    '<td style="color:#3b82f6; font-weight:800;">' + (rec.cr_l1718 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l63 || 0) + '</td>' +
+                    '<td>' + (rec.cr_l105 || 0) + '</td>' +
+                    '<td style="color:var(--text-muted);">' + (rec.cr_blancos || 0) + '</td>' +
+                    '<td style="color:var(--danger);">' + (rec.cr_nulos || 0) + '</td>';
+            }
+
+            var tr = document.createElement('tr');
+            tr.className = 'animate-row';
+            tr.style.animationDelay = (idx * 50) + 'ms';
+            tr.innerHTML = mesaCell + dataCells + timeCell +
+                '<td style="text-align:center;">' + mapLink + '</td>' +
+                '<td>' + actaBtn + '</td>' +
+                '<td>' + userStr + '</td>';
+            tbody.appendChild(tr);
+        });
+
+        updatePagination('admin-votos', adminVotosPage, totalPages);
+    }
+
+    // Listener de búsqueda admin
+    document.addEventListener('DOMContentLoaded', function() {
+        var adminSearch = document.getElementById('admin-search-votos');
+        if (adminSearch) {
+            adminSearch.addEventListener('input', function() {
+                var term = this.value.toLowerCase();
+                adminVotosFiltered = adminVotosData.filter(function(r) {
+                    var uName = (r.usuarios && r.usuarios.username) ? r.usuarios.username : '';
+                    var text = ('Mesa ' + r.junta_numero + ' ' + (r.genero || '') + ' ' + (r.establecimiento || '') + ' ' + (r.observaciones || '') + ' ' + uName).toLowerCase();
+                    return text.includes(term);
+                });
+                adminVotosPage = 1;
+                renderAdminDashboardTable();
+            });
+        }
+    });
+
     window._clearFilter = function() {
         globalAdminFilter = null;
         document.getElementById('btn-clear-filter').style.display = 'none';
@@ -1350,6 +1614,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('admin-total-votos').textContent = totalVotos.toLocaleString();
                 document.getElementById('admin-total-mesas').textContent = dataToRender.length;
                 
+                var totalBlancos = dataToRender.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+                var totalNulos = dataToRender.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+                var pendientes = Math.max(0, TOTAL_JUNTAS - dataToRender.length);
+
+                document.getElementById('admin-total-blancos').textContent = totalBlancos.toLocaleString();
+                document.getElementById('admin-total-nulos').textContent = totalNulos.toLocaleString();
+                document.getElementById('admin-pendientes').textContent = pendientes;
+                
                 // Progress
                 var progressPercent = Math.min(100, Math.round((dataToRender.length / TOTAL_JUNTAS) * 100));
                 var pText = document.getElementById('admin-progress-text');
@@ -1358,6 +1630,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     pText.textContent = dataToRender.length + '/' + TOTAL_JUNTAS + ' (' + progressPercent + '%)';
                     pFill.style.width = progressPercent + '%';
                 }
+
+                // Table setup
+                adminVotosData = votosRes.data;
+                var searchTerm = document.getElementById('admin-search-votos') ? document.getElementById('admin-search-votos').value.toLowerCase() : '';
+                if (searchTerm) {
+                    adminVotosFiltered = adminVotosData.filter(function(r) {
+                        var uName = (r.usuarios && r.usuarios.username) ? r.usuarios.username : '';
+                        var text = ('Mesa ' + r.junta_numero + ' ' + (r.genero || '') + ' ' + (r.establecimiento || '') + ' ' + (r.observaciones || '') + ' ' + uName).toLowerCase();
+                        return text.includes(searchTerm);
+                    });
+                } else {
+                    adminVotosFiltered = adminVotosData.slice();
+                }
+                
+                renderAdminScoreboard(dataToRender);
+                renderAdminDashboardTable();
 
                 var chartData = dataToRender.slice().sort(function(a,b){ return a.junta_numero - b.junta_numero; });
                 renderAdminChart(chartData);
@@ -1709,34 +1997,257 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ================================================
-    // REPORTE PDF
+    // REPORTE PDF — Generado con jsPDF
     // ================================================
-    window._exportPDF = function() {
-        if (typeof html2pdf === 'undefined') {
-            showToast('Librería PDF no cargada aún. Intente de nuevo.', 'error');
+    window._exportPDF = async function() {
+        if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+            showToast('Librería jsPDF no cargada. Recarga la página.', 'error');
             return;
         }
+
         var btn = document.getElementById('btn-export-pdf');
         btn.disabled = true;
         btn.textContent = 'Generando...';
 
-        var element = document.getElementById('view-admin');
-        
-        // Configuración para el PDF
-        var opt = {
-            margin:       0.5,
-            filename:     'Informe_Ejecutivo_Votos.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
+        try {
+            // Obtener datos frescos
+            var res = await supabase.from('votos').select('*, usuarios(username)').order('created_at', { ascending: false });
+            if (res.error) throw res.error;
+            var data = res.data || [];
 
-        // Generar PDF
-        html2pdf().set(opt).from(element).save().then(function() {
+            var JsPDF = window.jspdf ? window.jspdf.jsPDF : jsPDF;
+            var doc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            var pageW = 210;
+            var margin = 14;
+            var y = 0;
+
+            // ── ENCABEZADO ──────────────────────────────────────────────
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 0, pageW, 38, 'F');
+
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 36, pageW, 3, 'F');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(96, 165, 250);
+            doc.text('INFORME EJECUTIVO DE ESCRUTINIO', pageW / 2, 14, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setTextColor(148, 163, 184);
+            doc.text('Campaña Fabián Robles  •  Lista 17-18', pageW / 2, 22, { align: 'center' });
+
+            doc.setFontSize(8);
+            doc.setTextColor(100, 116, 139);
+            var now = new Date().toLocaleString('es-EC', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            doc.text('Generado: ' + now, pageW / 2, 30, { align: 'center' });
+
+            y = 48;
+
+            // ── KPIs ────────────────────────────────────────────────────
+            var totalFabian  = data.reduce(function(s,r){ return s+(r.cantidad_votos||0);},0);
+            var totalBlancos = data.reduce(function(s,r){ return s+(r.votos_blancos||0);},0);
+            var totalNulos   = data.reduce(function(s,r){ return s+(r.votos_nulos||0);},0);
+            var mesasRep     = data.length;
+            var pct          = TOTAL_JUNTAS > 0 ? Math.round((mesasRep/TOTAL_JUNTAS)*100) : 0;
+
+            var kpis = [
+                { label: 'Votos Fabián', value: totalFabian.toLocaleString(), color: [37,99,235] },
+                { label: 'Mesas Reportadas', value: mesasRep + '/' + TOTAL_JUNTAS + ' (' + pct + '%)', color: [5,150,105] },
+                { label: 'Votos Blancos', value: totalBlancos.toLocaleString(), color: [107,114,128] },
+                { label: 'Votos Nulos', value: totalNulos.toLocaleString(), color: [220,38,38] },
+            ];
+
+            var kpiW = (pageW - margin*2 - 9) / 4;
+            kpis.forEach(function(k, i) {
+                var x = margin + i * (kpiW + 3);
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(k.color[0], k.color[1], k.color[2]);
+                doc.setLineWidth(0.5);
+                doc.roundedRect(x, y, kpiW, 20, 2, 2, 'FD');
+
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(k.color[0], k.color[1], k.color[2]);
+                doc.text(k.value, x + kpiW/2, y + 10, { align: 'center' });
+
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 116, 139);
+                doc.text(k.label.toUpperCase(), x + kpiW/2, y + 16, { align: 'center' });
+            });
+
+            y += 28;
+
+            // ── ALCALDE — MARCADOR ──────────────────────────────────────
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('🏛  RESULTADOS ALCALDE', margin, y);
+            doc.setDrawColor(37, 99, 235);
+            doc.setLineWidth(0.4);
+            doc.line(margin, y+2, pageW-margin, y+2);
+            y += 7;
+
+            var alcalde = [
+                { label: 'Fabián Robles',   sub:'Lista 17-18', key:'cantidad_votos', color:[37,99,235] },
+                { label: 'Raúl Lucero',     sub:'Lista 1',     key:'alc_l1',         color:[220,38,38] },
+                { label: 'Andrés Ponce',    sub:'Lista 4',     key:'alc_l4',         color:[217,119,6] },
+                { label: 'Gabriel Jácome',  sub:'Lista 7',     key:'alc_l7',         color:[5,150,105] },
+                { label: 'Rubén Castillo',  sub:'Lista 63',    key:'alc_l63',        color:[124,58,237] },
+                { label: 'Javier Proaño',   sub:'Lista 105',   key:'alc_l105',       color:[219,39,119] },
+            ];
+
+            var alcTotals = alcalde.map(function(c){ return data.reduce(function(s,r){return s+(r[c.key]||0);},0); });
+            var alcMax = Math.max.apply(null, alcTotals) || 1;
+            var barMaxW = pageW - margin*2 - 50;
+
+            alcalde.forEach(function(c, i) {
+                var val = alcTotals[i];
+                var barW = (val / alcMax) * barMaxW;
+                var pctAlc = alcMax > 0 ? Math.round((val/alcTotals[0])*100) : 0; // vs Fabián
+
+                // Barra fondo
+                doc.setFillColor(241, 245, 249);
+                doc.roundedRect(margin + 48, y, barMaxW, 6, 1, 1, 'F');
+                // Barra valor
+                if (barW > 0) {
+                    doc.setFillColor(c.color[0], c.color[1], c.color[2]);
+                    doc.roundedRect(margin + 48, y, barW, 6, 1, 1, 'F');
+                }
+                // Nombre
+                doc.setFont('helvetica', i===0 ? 'bold' : 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(30,41,59);
+                doc.text(c.label + ' (' + c.sub + ')', margin, y + 4.5);
+                // Número
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(c.color[0], c.color[1], c.color[2]);
+                doc.text(val.toLocaleString(), pageW - margin, y + 4.5, { align: 'right' });
+
+                y += 9;
+            });
+
+            // Blancos/Nulos alcalde
+            var alcBla = data.reduce(function(s,r){return s+(r.votos_blancos||0);},0);
+            var alcNul = data.reduce(function(s,r){return s+(r.votos_nulos||0);},0);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(107,114,128);
+            doc.text('Blancos: ' + alcBla + '   Nulos: ' + alcNul, margin, y + 2);
+            y += 10;
+
+            // ── PREFECTO ────────────────────────────────────────────────
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(109, 40, 217);
+            doc.text('👑  RESULTADOS PREFECTO', margin, y);
+            doc.setDrawColor(124, 58, 237);
+            doc.setLineWidth(0.4);
+            doc.line(margin, y+2, pageW-margin, y+2);
+            y += 7;
+
+            var prefecto = [
+                { label:'Edison Romo',  sub:'Lista 4',  key:'pref_l4',  color:[217,119,6] },
+                { label:'Lucia Poso',   sub:'Lista 7',  key:'pref_l7',  color:[5,150,105] },
+                { label:'Julio Robles', sub:'Lista 63', key:'pref_l63', color:[124,58,237] },
+            ];
+            var prefTotals = prefecto.map(function(c){ return data.reduce(function(s,r){return s+(r[c.key]||0);},0); });
+            var prefMax = Math.max.apply(null, prefTotals) || 1;
+
+            prefecto.forEach(function(c, i) {
+                var val = prefTotals[i];
+                var barW2 = (val / prefMax) * barMaxW;
+                doc.setFillColor(241,245,249);
+                doc.roundedRect(margin+48, y, barMaxW, 6, 1,1,'F');
+                if (barW2 > 0) { doc.setFillColor(c.color[0],c.color[1],c.color[2]); doc.roundedRect(margin+48, y, barW2, 6, 1,1,'F'); }
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,41,59);
+                doc.text(c.label + ' (' + c.sub + ')', margin, y+4.5);
+                doc.setFont('helvetica','bold'); doc.setTextColor(c.color[0],c.color[1],c.color[2]);
+                doc.text(val.toLocaleString(), pageW-margin, y+4.5, { align:'right' });
+                y += 9;
+            });
+            var prefBla = data.reduce(function(s,r){return s+(r.pref_blancos||0);},0);
+            var prefNul = data.reduce(function(s,r){return s+(r.pref_nulos||0);},0);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(107,114,128);
+            doc.text('Blancos: ' + prefBla + '   Nulos: ' + prefNul, margin, y+2);
+            y += 12;
+
+            // ── TABLA MESAS ─────────────────────────────────────────────
+            doc.addPage();
+            y = 20;
+
+            doc.setFillColor(15,23,42);
+            doc.rect(0, 0, pageW, 14, 'F');
+            doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(96,165,250);
+            doc.text('DETALLE POR MESA RECEPTORA', pageW/2, 9, { align:'center' });
+
+            // Cabecera tabla
+            var cols = ['Mesa','Género','Establecimiento','Fabián (L17-18)','L1','L4','L7','L63','L105','Blancos','Nulos'];
+            var colW  = [14,    14,      58,               22,               10,  10,  10,  10,   10,   14,      12];
+            var colX  = [];
+            var cx = margin;
+            colW.forEach(function(w){ colX.push(cx); cx += w; });
+
+            doc.setFillColor(37,99,235);
+            doc.rect(margin, y, pageW - margin*2, 7, 'F');
+            doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,255,255);
+            cols.forEach(function(h, i){ doc.text(h, colX[i]+1, y+4.5); });
+            y += 7;
+
+            // Filas
+            data.forEach(function(r, idx) {
+                if (y > 270) { doc.addPage(); y = 20; }
+                if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(margin, y, pageW-margin*2, 6, 'F'); }
+                doc.setFont('helvetica', idx===0?'bold':'normal'); doc.setFontSize(6.5); doc.setTextColor(30,41,59);
+
+                var gen = r.genero === 'Masculino' ? 'M' : (r.genero === 'Femenino' ? 'F' : '');
+                var est = (r.establecimiento||'—').substring(0,28);
+                var rowData = [
+                    'Mesa ' + (r.junta_numero||''),
+                    gen,
+                    est,
+                    (r.cantidad_votos||0).toString(),
+                    (r.alc_l1||0).toString(),
+                    (r.alc_l4||0).toString(),
+                    (r.alc_l7||0).toString(),
+                    (r.alc_l63||0).toString(),
+                    (r.alc_l105||0).toString(),
+                    (r.votos_blancos||0).toString(),
+                    (r.votos_nulos||0).toString()
+                ];
+
+                rowData.forEach(function(cell, i) {
+                    if (i === 3) { doc.setTextColor(37,99,235); doc.setFont('helvetica','bold'); }
+                    else { doc.setTextColor(30,41,59); doc.setFont('helvetica','normal'); }
+                    doc.text(cell, colX[i]+1, y+4);
+                });
+
+                doc.setDrawColor(226,232,240);
+                doc.setLineWidth(0.1);
+                doc.line(margin, y+6, pageW-margin, y+6);
+                y += 6;
+            });
+
+            // ── PIE DE PÁGINA ───────────────────────────────────────────
+            var totalPgs = doc.getNumberOfPages();
+            for (var pg = 1; pg <= totalPgs; pg++) {
+                doc.setPage(pg);
+                doc.setFillColor(15,23,42);
+                doc.rect(0, 288, pageW, 10, 'F');
+                doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,116,139);
+                doc.text('Campaña Fabián Robles — Sistema CNE  |  Documento confidencial de uso interno', margin, 294);
+                doc.text('Pág. ' + pg + ' / ' + totalPgs, pageW-margin, 294, { align:'right' });
+            }
+
+            doc.save('Informe_Escrutinio_' + new Date().toLocaleDateString('es-EC').replace(/\//g,'-') + '.pdf');
+            showToast('✅ Informe PDF generado exitosamente', 'success');
+
+        } catch(err) {
+            console.error('PDF error:', err);
+            showToast('Error al generar PDF: ' + err.message, 'error');
+        } finally {
             btn.disabled = false;
             btn.textContent = '📄 PDF';
-            showToast('PDF generado exitosamente', 'success');
-        });
+        }
     };
 
     // ================================================
