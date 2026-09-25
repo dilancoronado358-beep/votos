@@ -303,63 +303,194 @@
             <div class="glass-panel">
                 <h3 style="margin-bottom: 20px;">🗳️ Paso 2: Resultados (5:00 PM)</h3>
                 <form id="form-mesa">
+                    <!-- Info de la Mesa -->
                     <div class="form-group">
                         <label for="establecimiento-mesa">Establecimiento de Votación</label>
-                        <input type="text" id="establecimiento-mesa" required
-                            placeholder="Ej. Escuela Fiscal Juan Montalvo">
+                        <input type="text" id="establecimiento-mesa" required placeholder="Ej. Escuela Fiscal Juan Montalvo">
                     </div>
-
-                    <div class="form-group">
-                        <label for="numero-junta">Número de Junta Receptora</label>
-                        <input type="number" id="numero-junta" required placeholder="Ej. 12" min="1">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="genero-junta">Género de la Junta</label>
-                        <select id="genero-junta" required
-                            style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid var(--surface-border); font-size:1rem; font-family:inherit; background-color:var(--surface); color:var(--text); transition:all 0.3s; margin-bottom: 20px;">
-                            <option value="" disabled selected>Seleccione el género de la junta</option>
-                            <option value="Masculino">Masculino (M)</option>
-                            <option value="Femenino">Femenino (F)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cantidad-votos" style="color:var(--primary); font-weight:bold;">✅ Votos para Fabián
-                            Robles</label>
-                        <input type="number" id="cantidad-votos" required placeholder="Ej. 150" min="0"
-                            style="border-color:var(--primary);">
-                    </div>
-
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div class="form-group">
-                            <label for="votos-blancos">⚪ Votos en Blanco</label>
-                            <input type="number" id="votos-blancos" required placeholder="Ej. 5" min="0">
+                            <label for="numero-junta">Número de Junta</label>
+                            <input type="number" id="numero-junta" required placeholder="Ej. 12" min="1">
                         </div>
                         <div class="form-group">
-                            <label for="votos-nulos">❌ Votos Nulos</label>
-                            <input type="number" id="votos-nulos" required placeholder="Ej. 10" min="0">
+                            <label for="genero-junta">Género de la Junta</label>
+                            <select id="genero-junta" required style="width:100%; padding:14px 16px; border-radius:12px; border:2px solid var(--surface-border); font-size:1rem; font-family:inherit; background-color:var(--surface); color:var(--text); transition:all 0.3s;">
+                                <option value="" disabled selected>Género</option>
+                                <option value="Masculino">Masculino (M)</option>
+                                <option value="Femenino">Femenino (F)</option>
+                            </select>
                         </div>
                     </div>
 
+                    <!-- PREFECTO -->
+                    <div class="dignidad-section" style="background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3); border-radius:14px; padding:16px; margin-bottom:18px;">
+                        <h4 style="color:#7c3aed; margin:0 0 14px; font-size:1rem; display:flex; align-items:center; gap:8px;">👑 PREFECTO</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#7c3aed;">Lista 4 – Edison Romo</label>
+                                <input type="number" id="pref-l4" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#7c3aed;">Lista 7 – Lucia Poso</label>
+                                <input type="number" id="pref-l7" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#7c3aed;">Lista 63 – Julio Robles</label>
+                                <input type="number" id="pref-l63" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">⚪ Blancos Prefecto</label>
+                                <input type="number" id="pref-blancos" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">❌ Nulos Prefecto</label>
+                                <input type="number" id="pref-nulos" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ALCALDE -->
+                    <div class="dignidad-section" style="background:rgba(59,130,246,0.08); border:2px solid rgba(59,130,246,0.4); border-radius:14px; padding:16px; margin-bottom:18px;">
+                        <h4 style="color:var(--primary); margin:0 0 14px; font-size:1rem; display:flex; align-items:center; gap:8px;">🏛️ ALCALDE</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Lista 1 – Raúl Lucero</label>
+                                <input type="number" id="alc-l1" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Lista 4 – Andrés Ponce</label>
+                                <input type="number" id="alc-l4" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Lista 7 – Gabriel Jácome</label>
+                                <input type="number" id="alc-l7" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0; border:2px solid var(--primary); border-radius:10px; padding:8px;">
+                                <label style="font-size:0.8rem; color:var(--primary); font-weight:bold;">✅ Lista 17-18 – FABIÁN ROBLES</label>
+                                <input type="number" id="cantidad-votos" required placeholder="0" min="0" style="border-color:var(--primary); font-weight:bold;">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Lista 63 – Rubén Castillo</label>
+                                <input type="number" id="alc-l63" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Lista 105 – Javier Proaño</label>
+                                <input type="number" id="alc-l105" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">⚪ Blancos Alcalde</label>
+                                <input type="number" id="votos-blancos" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">❌ Nulos Alcalde</label>
+                                <input type="number" id="votos-nulos" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONCEJALES URBANOS -->
+                    <div class="dignidad-section" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:16px; margin-bottom:18px;">
+                        <h4 style="color:#059669; margin:0 0 14px; font-size:1rem; display:flex; align-items:center; gap:8px;">🏙️ CONCEJALES URBANOS</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 1</label>
+                                <input type="number" id="cu-l1" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 4</label>
+                                <input type="number" id="cu-l4" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 7</label>
+                                <input type="number" id="cu-l7" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 17-18</label>
+                                <input type="number" id="cu-l1718" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 63</label>
+                                <input type="number" id="cu-l63" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#059669;">Lista 105</label>
+                                <input type="number" id="cu-l105" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">⚪ Blancos Urb.</label>
+                                <input type="number" id="cu-blancos" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">❌ Nulos Urb.</label>
+                                <input type="number" id="cu-nulos" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONCEJALES RURALES -->
+                    <div class="dignidad-section" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:14px; padding:16px; margin-bottom:18px;">
+                        <h4 style="color:#d97706; margin:0 0 14px; font-size:1rem; display:flex; align-items:center; gap:8px;">🌾 CONCEJALES RURALES</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 1</label>
+                                <input type="number" id="cr-l1" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 4</label>
+                                <input type="number" id="cr-l4" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 7</label>
+                                <input type="number" id="cr-l7" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 17-18</label>
+                                <input type="number" id="cr-l1718" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 63</label>
+                                <input type="number" id="cr-l63" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:#d97706;">Lista 105</label>
+                                <input type="number" id="cr-l105" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">⚪ Blancos Rur.</label>
+                                <input type="number" id="cr-blancos" required placeholder="0" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">❌ Nulos Rur.</label>
+                                <input type="number" id="cr-nulos" required placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOTALES GENERALES -->
                     <div class="form-group">
                         <label for="total-sufragantes">👥 Total de Sufragantes (Padrón de la Mesa)</label>
                         <input type="number" id="total-sufragantes" required placeholder="Ej. 350" min="1">
-                        <small style="color:var(--text-muted); display:block; margin-top:4px;">Debe cuadrar con la suma
-                            de los votos registrados.</small>
+                        <small style="color:var(--text-muted); display:block; margin-top:4px;">Total de personas habilitadas en esta mesa.</small>
                     </div>
 
                     <div class="form-group">
                         <label for="observaciones">Observaciones (Opcional)</label>
-                        <textarea id="observaciones" rows="2"
-                            placeholder="Ej. Faltaron papeletas, llegó tarde..."></textarea>
+                        <textarea id="observaciones" rows="2" placeholder="Ej. Faltaron papeletas, llegó tarde..."></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="evidencia-archivo">📸 Evidencia del Acta (PDF o Foto)</label>
                         <div class="file-upload-wrapper">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>

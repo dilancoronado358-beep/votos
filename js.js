@@ -541,6 +541,40 @@ document.addEventListener('DOMContentLoaded', function () {
         var fileInput = document.getElementById('evidencia-archivo');
         var btnSubmit = e.target.querySelector('button[type="submit"]');
 
+        // Prefecto
+        var prefL4   = parseInt(document.getElementById('pref-l4').value) || 0;
+        var prefL7   = parseInt(document.getElementById('pref-l7').value) || 0;
+        var prefL63  = parseInt(document.getElementById('pref-l63').value) || 0;
+        var prefBlancos = parseInt(document.getElementById('pref-blancos').value) || 0;
+        var prefNulos   = parseInt(document.getElementById('pref-nulos').value) || 0;
+
+        // Alcalde (otros candidatos)
+        var alcL1    = parseInt(document.getElementById('alc-l1').value) || 0;
+        var alcL4    = parseInt(document.getElementById('alc-l4').value) || 0;
+        var alcL7    = parseInt(document.getElementById('alc-l7').value) || 0;
+        var alcL63   = parseInt(document.getElementById('alc-l63').value) || 0;
+        var alcL105  = parseInt(document.getElementById('alc-l105').value) || 0;
+
+        // Concejales Urbanos
+        var cuL1    = parseInt(document.getElementById('cu-l1').value) || 0;
+        var cuL4    = parseInt(document.getElementById('cu-l4').value) || 0;
+        var cuL7    = parseInt(document.getElementById('cu-l7').value) || 0;
+        var cuL1718 = parseInt(document.getElementById('cu-l1718').value) || 0;
+        var cuL63   = parseInt(document.getElementById('cu-l63').value) || 0;
+        var cuL105  = parseInt(document.getElementById('cu-l105').value) || 0;
+        var cuBlancos = parseInt(document.getElementById('cu-blancos').value) || 0;
+        var cuNulos   = parseInt(document.getElementById('cu-nulos').value) || 0;
+
+        // Concejales Rurales
+        var crL1    = parseInt(document.getElementById('cr-l1').value) || 0;
+        var crL4    = parseInt(document.getElementById('cr-l4').value) || 0;
+        var crL7    = parseInt(document.getElementById('cr-l7').value) || 0;
+        var crL1718 = parseInt(document.getElementById('cr-l1718').value) || 0;
+        var crL63   = parseInt(document.getElementById('cr-l63').value) || 0;
+        var crL105  = parseInt(document.getElementById('cr-l105').value) || 0;
+        var crBlancos = parseInt(document.getElementById('cr-blancos').value) || 0;
+        var crNulos   = parseInt(document.getElementById('cr-nulos').value) || 0;
+
         if (!fileInput.files.length) { showToast('Debes adjuntar la evidencia del acta.', 'error'); return; }
         if (!currentUser) { showToast('Tu sesión ha expirado', 'error'); logout(); return; }
 
@@ -579,6 +613,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     longitud: loc.lon,
                     observaciones: observaciones + ' [Enviado Offline]',
                     user_id: currentUser.id,
+                    // Prefecto
+                    pref_l4: prefL4, pref_l7: prefL7, pref_l63: prefL63,
+                    pref_blancos: prefBlancos, pref_nulos: prefNulos,
+                    // Alcalde
+                    alc_l1: alcL1, alc_l4: alcL4, alc_l7: alcL7,
+                    alc_l63: alcL63, alc_l105: alcL105,
+                    // Concejales Urbanos
+                    cu_l1: cuL1, cu_l4: cuL4, cu_l7: cuL7, cu_l1718: cuL1718, cu_l63: cuL63, cu_l105: cuL105,
+                    cu_blancos: cuBlancos, cu_nulos: cuNulos,
+                    // Concejales Rurales
+                    cr_l1: crL1, cr_l4: crL4, cr_l7: crL7, cr_l1718: crL1718, cr_l63: crL63, cr_l105: crL105,
+                    cr_blancos: crBlancos, cr_nulos: crNulos,
                     evidencia_b64: b64,
                     fileName: compressedFile.name
                 });
@@ -616,7 +662,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 longitud: loc.lon,
                 observaciones: observaciones,
                 evidencia_url: publicUrl,
-                user_id: currentUser.id
+                user_id: currentUser.id,
+                // Prefecto
+                pref_l4: prefL4, pref_l7: prefL7, pref_l63: prefL63,
+                pref_blancos: prefBlancos, pref_nulos: prefNulos,
+                // Alcalde (otros)
+                alc_l1: alcL1, alc_l4: alcL4, alc_l7: alcL7,
+                alc_l63: alcL63, alc_l105: alcL105,
+                // Concejales Urbanos
+                cu_l1: cuL1, cu_l4: cuL4, cu_l7: cuL7, cu_l1718: cuL1718, cu_l63: cuL63, cu_l105: cuL105,
+                cu_blancos: cuBlancos, cu_nulos: cuNulos,
+                // Concejales Rurales
+                cr_l1: crL1, cr_l4: crL4, cr_l7: crL7, cr_l1718: crL1718, cr_l63: crL63, cr_l105: crL105,
+                cr_blancos: crBlancos, cr_nulos: crNulos
             };
 
             if (existingId) {
@@ -897,9 +955,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 { header: 'Junta', key: 'junta', width: 10 },
                 { header: 'Género', key: 'gen', width: 15 },
                 { header: 'Recinto/Establecimiento', key: 'est', width: 35 },
-                { header: 'Votos Fabián', key: 'votos', width: 15 },
-                { header: 'Blancos', key: 'bla', width: 10 },
-                { header: 'Nulos', key: 'nul', width: 10 },
+                { header: 'Votos Fabián (Alc L17-18)', key: 'votos', width: 20 },
+                { header: 'Alc L1 Lucero', key: 'alcl1', width: 14 },
+                { header: 'Alc L4 Ponce', key: 'alcl4', width: 14 },
+                { header: 'Alc L7 Jácome', key: 'alcl7', width: 14 },
+                { header: 'Alc L63 Castillo', key: 'alcl63', width: 14 },
+                { header: 'Alc L105 Proaño', key: 'alcl105', width: 14 },
+                { header: 'Blancos Alc.', key: 'bla', width: 12 },
+                { header: 'Nulos Alc.', key: 'nul', width: 12 },
+                { header: 'Pref L4 Romo', key: 'prefl4', width: 14 },
+                { header: 'Pref L7 Poso', key: 'prefl7', width: 14 },
+                { header: 'Pref L63 Robles', key: 'prefl63', width: 14 },
+                { header: 'Blancos Pref.', key: 'prefbla', width: 12 },
+                { header: 'Nulos Pref.', key: 'prefnul', width: 12 },
+                { header: 'CU L1', key: 'cul1', width: 10 },
+                { header: 'CU L4', key: 'cul4', width: 10 },
+                { header: 'CU L7', key: 'cul7', width: 10 },
+                { header: 'CU L17-18', key: 'cul1718', width: 12 },
+                { header: 'CU L63', key: 'cul63', width: 10 },
+                { header: 'CU L105', key: 'cul105', width: 10 },
+                { header: 'Blancos CU', key: 'cubla', width: 12 },
+                { header: 'Nulos CU', key: 'cunul', width: 12 },
+                { header: 'CR L1', key: 'crl1', width: 10 },
+                { header: 'CR L4', key: 'crl4', width: 10 },
+                { header: 'CR L7', key: 'crl7', width: 10 },
+                { header: 'CR L17-18', key: 'crl1718', width: 12 },
+                { header: 'CR L63', key: 'crl63', width: 10 },
+                { header: 'CR L105', key: 'crl105', width: 10 },
+                { header: 'Blancos CR', key: 'crbla', width: 12 },
+                { header: 'Nulos CR', key: 'crnul', width: 12 },
                 { header: 'Total Padrón', key: 'pad', width: 15 },
                 { header: 'Latitud', key: 'lat', width: 15 },
                 { header: 'Longitud', key: 'lon', width: 15 },
@@ -920,11 +1004,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     gen: r.genero || '',
                     est: r.establecimiento || '',
                     votos: r.cantidad_votos,
+                    alcl1: r.alc_l1 || 0, alcl4: r.alc_l4 || 0, alcl7: r.alc_l7 || 0,
+                    alcl63: r.alc_l63 || 0, alcl105: r.alc_l105 || 0,
                     bla: r.votos_blancos || 0,
                     nul: r.votos_nulos || 0,
+                    prefl4: r.pref_l4 || 0, prefl7: r.pref_l7 || 0, prefl63: r.pref_l63 || 0,
+                    prefbla: r.pref_blancos || 0, prefnul: r.pref_nulos || 0,
+                    cul1: r.cu_l1 || 0, cul4: r.cu_l4 || 0, cul7: r.cu_l7 || 0,
+                    cul1718: r.cu_l1718 || 0, cul63: r.cu_l63 || 0, cul105: r.cu_l105 || 0,
+                    cubla: r.cu_blancos || 0, cunul: r.cu_nulos || 0,
+                    crl1: r.cr_l1 || 0, crl4: r.cr_l4 || 0, crl7: r.cr_l7 || 0,
+                    crl1718: r.cr_l1718 || 0, crl63: r.cr_l63 || 0, crl105: r.cr_l105 || 0,
+                    crbla: r.cr_blancos || 0, crnul: r.cr_nulos || 0,
                     pad: r.total_sufragantes || 0,
-                    lat: r.latitud || '',
-                    lon: r.longitud || '',
+                    lat: r.latitud || '', lon: r.longitud || '',
                     obs: r.observaciones || '',
                     fecha: new Date(r.created_at).toLocaleString(),
                     url: r.evidencia_url
@@ -1203,21 +1296,40 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!canvas) return;
         if (distChart) distChart.destroy();
 
-        var totalFabian = data.reduce(function(s, r) { return s + r.cantidad_votos; }, 0);
+        // Alcalde totales por candidato
+        var totalFabian  = data.reduce(function(s, r) { return s + (r.cantidad_votos || 0); }, 0);
+        var totalL1      = data.reduce(function(s, r) { return s + (r.alc_l1 || 0); }, 0);
+        var totalL4      = data.reduce(function(s, r) { return s + (r.alc_l4 || 0); }, 0);
+        var totalL7      = data.reduce(function(s, r) { return s + (r.alc_l7 || 0); }, 0);
+        var totalL63     = data.reduce(function(s, r) { return s + (r.alc_l63 || 0); }, 0);
+        var totalL105    = data.reduce(function(s, r) { return s + (r.alc_l105 || 0); }, 0);
         var totalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
-        var totalNulos = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+        var totalNulos   = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
 
         var ctx = canvas.getContext('2d');
         distChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Fabián Robles', 'Blancos', 'Nulos'],
+                labels: [
+                    'Fabián Robles (L17-18)',
+                    'Raúl Lucero (L1)',
+                    'Andrés Ponce (L4)',
+                    'Gabriel Jácome (L7)',
+                    'Rubén Castillo (L63)',
+                    'Javier Proaño (L105)',
+                    'Blancos', 'Nulos'
+                ],
                 datasets: [{
-                    data: [totalFabian, totalBlancos, totalNulos],
+                    data: [totalFabian, totalL1, totalL4, totalL7, totalL63, totalL105, totalBlancos, totalNulos],
                     backgroundColor: [
-                        'rgba(59, 130, 246, 0.9)', // Blue
-                        'rgba(200, 200, 200, 0.8)', // Gray
-                        'rgba(239, 68, 68, 0.8)'    // Red
+                        'rgba(59, 130, 246, 0.9)',
+                        'rgba(239, 68, 68, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(139, 92, 246, 0.85)',
+                        'rgba(236, 72, 153, 0.85)',
+                        'rgba(200, 200, 200, 0.7)',
+                        'rgba(107, 114, 128, 0.7)'
                     ],
                     borderWidth: 0
                 }]
@@ -1226,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'right', labels: { color: document.body.classList.contains('dark-mode') ? '#e4e4e7' : '#3f3f46' } }
+                    legend: { position: 'right', labels: { color: document.body.classList.contains('dark-mode') ? '#e4e4e7' : '#3f3f46', font: { size: 10 } } }
                 }
             }
         });
@@ -1697,20 +1809,33 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // TV Distribución Chart
+        // TV Distribución Chart — todos los candidatos de Alcalde
         var canvas = document.getElementById('chart-tv-distribucion');
         if (canvas) {
             if (tvDistChart) tvDistChart.destroy();
-            var totalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
-            var totalNulos = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
+            var tvTotalL1   = data.reduce(function(s, r) { return s + (r.alc_l1 || 0); }, 0);
+            var tvTotalL4   = data.reduce(function(s, r) { return s + (r.alc_l4 || 0); }, 0);
+            var tvTotalL7   = data.reduce(function(s, r) { return s + (r.alc_l7 || 0); }, 0);
+            var tvTotalL63  = data.reduce(function(s, r) { return s + (r.alc_l63 || 0); }, 0);
+            var tvTotalL105 = data.reduce(function(s, r) { return s + (r.alc_l105 || 0); }, 0);
+            var tvTotalBlancos = data.reduce(function(s, r) { return s + (r.votos_blancos || 0); }, 0);
+            var tvTotalNulos   = data.reduce(function(s, r) { return s + (r.votos_nulos || 0); }, 0);
             var ctx = canvas.getContext('2d');
             tvDistChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Fabián Robles', 'Blancos', 'Nulos'],
+                    labels: [
+                        'Fabián (L17-18)',
+                        'Lucero (L1)',
+                        'Ponce (L4)',
+                        'Jácome (L7)',
+                        'Castillo (L63)',
+                        'Proaño (L105)',
+                        'Blancos', 'Nulos'
+                    ],
                     datasets: [{
-                        data: [totalVotos, totalBlancos, totalNulos],
-                        backgroundColor: ['#3b82f6', '#71717a', '#ef4444'],
+                        data: [totalVotos, tvTotalL1, tvTotalL4, tvTotalL7, tvTotalL63, tvTotalL105, tvTotalBlancos, tvTotalNulos],
+                        backgroundColor: ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#71717a','#374151'],
                         borderWidth: 0
                     }]
                 },
@@ -1718,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 24, weight: 'bold' }, padding: 30 } }
+                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 16, weight: 'bold' }, padding: 16 } }
                     }
                 }
             });
